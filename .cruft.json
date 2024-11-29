@@ -1,0 +1,30 @@
+{
+  "template": "https://github.com/statisticsnorway/ssb-pypitemplate.git",
+  "commit": "e4eee94f1d7d31406fd6ca71c2bad7a9a313d02b",
+  "checkout": "2024.11.27",
+  "context": {
+    "cookiecutter": {
+      "project_name": "ssb-vaskify",
+      "package_name": "vaskify",
+      "friendly_name": "vaskify",
+      "copyright_owner": "Statistics Norway",
+      "copyright_year": "2024",
+      "author": "Susie Jentoft",
+      "email": "susie.jentoft@ssb.no",
+      "github_organization": "statisticsnorway",
+      "version": "0.0.0",
+      "license": "MIT",
+      "development_status": "Development Status :: 3 - Alpha",
+      "code_quality_level": "High",
+      "_copy_without_render": [
+        "*.rst_t"
+      ],
+      "_jinja2_env_vars": {
+        "lstrip_blocks": true,
+        "trim_blocks": true
+      },
+      "_template": "https://github.com/statisticsnorway/ssb-pypitemplate.git"
+    }
+  },
+  "directory": null
+}
