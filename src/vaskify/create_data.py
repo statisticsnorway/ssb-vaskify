@@ -19,7 +19,7 @@
 import pandas as pd
 import numpy as np
 
-def create_test_data(num_industries=5, num_periods=5, freq = "monthly", seed=None, ):
+def create_test_data(num_industries:int=5, num_periods:int =5, freq: str = "monthly", seed:int=None)-> pd.DataFrame:
     """
     Generate test data with columns: NACE, number of employees, turnover, time period.
     
@@ -49,16 +49,16 @@ def create_test_data(num_industries=5, num_periods=5, freq = "monthly", seed=Non
     # Create Cartesian product of industries and periods
     data = pd.DataFrame(
         [(nace, period) for nace in industry_codes for period in time_periods],
-        columns=["NACE", "Time Period"]
+        columns=["nace", "time_period"]
     )
     
     # Generate random number of employees and turnover
-    data["Number of Employees"] = np.random.randint(10, 500, size=len(data))
+    data["employees"] = np.random.randint(10, 500, size=len(data))
 
     # Calculate turnover based on number of employees, with some random variation
-    data["Turnover"] = np.round(data["Number of Employees"] * np.random.uniform(20000, 5000), 2)
+    data["turnover"] = np.round(data["employees"] * np.random.uniform(20000, 5000), 2)
 
     return data
 
 
-   
+
