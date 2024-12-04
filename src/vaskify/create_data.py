@@ -16,42 +16,67 @@
 # %%
 # Functions to create data
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-def create_test_data(num_industries:int=5, num_periods:int =5, freq: str = "monthly", seed:int=None)-> pd.DataFrame:
-    """
-    Generate test data with columns: NACE, number of employees, turnover, time period.
-    
+
+def create_test_data(
+    n: int = 5,
+    n_periods: int = 5,
+    freq: str = "monthly",
+    seed: int | None = None,
+) -> pd.DataFrame:
+    """Generate test data with columns: NACE, number of employees, turnover, time period.
+
     Parameters:
-        num_industries (int): Number of unique industry codes (NACE).
+        n (int): Number of unique companies to create.
         num_periods (int): Number of time periods.
         seed (int): Random seed for reproducibility.
-    
+
     Returns:
         pd.DataFrame: Test data in long format.
     """
-    if seed is not None:
-        np.random.seed(seed)
-    
+    if seed:
+        rng = np.random.default_rng(seed)
+    else:
+        rng = np.random.default_rng(12345) #### work on this
+
+    company_ids = np.array(range(n))
+
     # Generate unique industry codes (NACE)
-    industry_codes = ['B', 'C', 'F', 'G', 'H', 'J', 'M', 'N', 'S']
-    industries = np.random.choice(industry_codes, size=num_industries)
-    
+    industry_codes = ["B", "C", "F", "G", "H", "J", "M", "N", "S"]
+    industries = np.random.choice(industry_codes, size=n, replace=True)
+
     # Generate time periods
     if freq == "monthly":
-        time_periods = pd.date_range(start="2020-01-01", periods=num_periods, freq="ME").strftime("%Y-M%#m")
+        time_periods = pd.date_range(
+            start="2020-01-01",
+            periods=n_periods,
+            freq="ME",
+        ).strftime("%Y-M%#m")
     if freq == "quarterly":
-        time_periods = pd.date_range(start="2020-01-01", periods=num_periods, freq="QE").strftime("%Y-Q%q")
+        time_periods = pd.date_range(
+            start="2020-01-01",
+            periods=n_periods,
+            freq="QE",
+        ).strftime("%Y-Q%q")
     if freq == "yearly":
-        time_periods = pd.date_range(start="2020-01-01", periods=num_periods, freq="YE").strftime("%Y")
+        time_periods = pd.date_range(
+            start="2020-01-01",
+            periods=n_periods,
+            freq="YE",
+        ).strftime("%Y")
 
     # Create Cartesian product of industries and periods
     data = pd.DataFrame(
-        [(nace, period) for nace in industry_codes for period in time_periods],
-        columns=["nace", "time_period"]
+        [(id_company, period) for id_company in company_ids for period in time_periods],
+        columns=["id_company", "time_period"],
     )
-    
+
+    # Map each company to its NACE code
+    nace_mapping = dict(zip(company_ids, industries, strict=False))
+    data["nace"] = data["id_company"].map(nace_mapping)
+
     # Generate random number of employees and turnover
     data["employees"] = np.random.randint(10, 500, size=len(data))
 
@@ -59,6 +84,3 @@ def create_test_data(num_industries:int=5, num_periods:int =5, freq: str = "mont
     data["turnover"] = np.round(data["employees"] * np.random.uniform(20000, 5000), 2)
 
     return data
-
-
-
