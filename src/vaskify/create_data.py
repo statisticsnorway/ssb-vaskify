@@ -1,17 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: py:percent
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.16.4
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
 
 # %%
 # Functions to create data
@@ -39,7 +25,7 @@ def create_test_data(
     if seed:
         rng = np.random.default_rng(seed)
     else:
-        rng = np.random.default_rng(12345) #### work on this
+        rng = np.random.default_rng(12345)  #### work on this
 
     company_ids = np.array(range(n))
 

@@ -1,17 +1,4 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: py:percent
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.16.4
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
+
 
 # %% [markdown]
 # # Functions for controlling data to identify possible errors
@@ -19,13 +6,14 @@
 #
 # - Add in data checks
 # - Stratification option
-# - Add in more printouts with verbose options
 # - Impute for accumulative error
 # - Documentation
 
 # %%
 import numpy as np
 import pandas as pd
+import logging
+
 
 
 # %%
@@ -36,22 +24,41 @@ class Detect:
         self,
         data: pd.DataFrame,
         id_nr: str,
-        verbose: int = 1,
+        logger_level: str = "warning",
     ) -> None:
         """Initialize general data editing object.
 
         Args:
             data: Pandas dataframe to be controlled/edited. If multiple time periods are in the data, the data should be in a long format.
             id_nr: String variable for the name of the variable to identify units with.
-            verbose: Integer for whether to show printed output or not. 1 is minimal output, 2 is more output.
+            logger_level: Detail level for information output. Choose between 'debug','info','warning','error' and 'critical'.
         """
         self.data = data
         self.id_nr = id_nr
-        self.verbose = verbose
 
-    def change_verbose(self, verbose: int) -> None:
-        """Change the verbose print level."""
-        self.verbose = verbose
+        # Set up logging - doesn't need to be self - global
+        logger_level="info"
+        logging_dict={"debug":10,"info":20,"warning":30,"error":40,"critical":50}
+        logger = logging.getLogger("detect")
+        logger.setLevel(logging_dict[logger_level])
+        
+        # add in console handling
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging_dict[logger_level])
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+        
+
+    def change_logging_level(self, logger_level: str) -> None:
+        """Change the logging print level.
+        Args:
+            logger_level: Detail level for information output. Choose between 'debug','info','warning','error' and 'critical'.
+        """
+        logger = logging.getLogger('detect')
+        logging_dict={"debug":10,"info":20,"warning":30,"error":40,"critical":50}
+        logger.setLevel(logging_dict[logger_level])
+        logger.info("hello")
 
     def thousand_error(
         self,
@@ -79,6 +86,7 @@ class Detect:
         Return:
             Data frame with flags or identified units
         """
+        logger = logging.getLogger('detect')
         if not impute_var:
             impute_var = f"{y_var}_imputed"
         # check data - add in
@@ -105,14 +113,14 @@ class Detect:
 
         # return data if output_format is data
         if output_format == "data":
-            output =  data
+            output = data
 
         # select outlier units and return only them if output_format is outliers
         if output_format == "outliers":
             outlier_ids = data.loc[mask_outlier, self.id_nr]
             mask_outlier_units = data[self.id_nr].isin(outlier_ids)
             output = data.loc[mask_outlier_units, :]
-            
+
         return output
 
     def accumulation_error(
@@ -139,8 +147,10 @@ class Detect:
         Return:
             Data frame with flags or identified units
         """
-        if not impute_var:
+        logger = logging.getLogger('detect')
+        if (not impute_var) and (impute):
             impute_var = f"{y_var}_imputed"
+            logger.info(f'No imputed variable name given so {impute_var} is being used')
 
         # check data
 
@@ -157,6 +167,11 @@ class Detect:
         mask_accum = data[y_var] > expected_turnover * (1 + error)
         data.loc[mask_accum, flag] = 1
 
+        # Impute - not implemented
+        if impute:
+            mes = "Imputation not implemented for this method."
+            raise ValueError(mes)
+
         if output_format == "data":
             output = data
         if output_format == "outliers":
@@ -165,16 +180,12 @@ class Detect:
                 .apply(lambda x: ((x == 1) | x.isna()).all())
                 .reset_index()
             )
-            if self.verbose == 2:
-                print(
-                    f"Number of units identified with possible accumulation errors: {flagged_ids[flag].sum()}",
-                )
-            ids_with_flag_all_periods = flagged_ids[flagged_ids[flag]][
-                self.id_nr
-            ]
+            logger.info(f"Number of units identified with possible accumulation errors: {flagged_ids[flag].sum()}")
+            logger.info("accum")
+            ids_with_flag_all_periods = flagged_ids[flagged_ids[flag]][self.id_nr]
             mask_units = data[self.id_nr].isin(ids_with_flag_all_periods)
-            output =  data.loc[mask_units, :]
-            
+            output = data.loc[mask_units, :]
+
         return output
 
     def hb(
@@ -184,8 +195,8 @@ class Detect:
         pu: float = 0.5,
         pa: float = 0.05,
         pc: float = 20,
-        percentiles: tuple(float, float) =(0.25, 0.75),
-        flag: str ="flag_hb",
+        percentiles: tuple[float, float] = (0.25, 0.75),
+        flag: str = "flag_hb",
         output_format: str = "wide",
     ) -> pd.DataFrame:
         """Outlier detection using the Hidiroglou-Berthelot (HB) method.
@@ -261,24 +272,19 @@ class Detect:
             0,
         )
         if output_format == "wide":
-            return valid_rows
+            output = valid_rows
         if output_format == "outliers":
             mask_units = valid_rows[flag] == 1
             output = valid_rows.loc[mask_units, :]
             if output.shape[0] == 0:
-                print("No outliers detected")
-                return None
-            return output
+                logger.info('No outliers detected')
+
         if output_format == "long":
-            long_data = output.melt(
+            output = output.melt(
                 id_vars=[self.id_nr, "ratio", "lower_limit", "upper_limit", flag],
                 value_vars=time_levels,
                 var_name=time_var,
                 value_name=y_var,
             )
-            return long_data
+        return output
 
-
-# %%
-
-# %%
