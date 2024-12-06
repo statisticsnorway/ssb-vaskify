@@ -1,5 +1,3 @@
-
-
 # %%
 from vaskify import create_test_data
 
@@ -14,8 +12,3 @@ def test_create_data() -> None:
         18,
         4,
     )
-
-
-# %%
-
-# %%

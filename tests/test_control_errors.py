@@ -1,5 +1,3 @@
-
-
 # %%
 from vaskify import Detect
 from vaskify import create_test_data
@@ -24,7 +22,9 @@ def test_accumulation_error() -> None:
         dt_controlled.columns.isin(["flag_accumulation"]),
     ), "Flag variable created"
     expected_value = 2
-    assert dt_controlled.flag_accumulation.sum() == expected_value, "Potential errors flagged"
+    assert (
+        dt_controlled.flag_accumulation.sum() == expected_value
+    ), "Potential errors flagged"
 
 
 # %%
