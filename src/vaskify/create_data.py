@@ -65,7 +65,8 @@ def create_test_data(
 
     # Calculate turnover based on number of employees, with some random variation
     data["turnover"] = np.round(
-        data["employees"] * rng.uniform(5000, 20000), 2
+        data["employees"] * rng.uniform(5000, 20000),
+        2,
     )  # check if all get same random or not...
 
     return data
