@@ -16,10 +16,18 @@ vaskify package
 =============================================================================
 
 
-vaskify.functions module
+vaskify.control_errors module
 -----------------------------------------------------------------------------
 
-.. automodule:: vaskify.functions
+.. automodule:: vaskify.control_errors
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+vaskify.create_data module
+-----------------------------------------------------------------------------
+
+.. automodule:: vaskify.create_data
    :members:
    :undoc-members:
    :show-inheritance:

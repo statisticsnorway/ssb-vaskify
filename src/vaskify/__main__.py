@@ -6,7 +6,7 @@ import click
 @click.command()
 @click.version_option()
 def main() -> None:
-    """vaskify."""
+    """Vaskify."""
 
 
 if __name__ == "__main__":

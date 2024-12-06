@@ -27,18 +27,15 @@
 
 ## Features
 
-- TODO
+- Thousand error, accumulation error and HB methods for detecting errors and outliers.
 
-## Requirements
-
-- TODO
 
 ## Installation
 
-You can install _vaskify_ via [pip] from [PyPI]:
+You can install _vaskify_ via [pip] from [PyPI] in a poetry environment using:
 
 ```console
-pip install ssb-vaskify
+poetry add ssb-vaskify
 ```
 
 ## Usage
@@ -74,4 +71,4 @@ This project was generated from [Statistics Norway]'s [SSB PyPI Template].
 
 [license]: https://github.com/statisticsnorway/ssb-vaskify/blob/main/LICENSE
 [contributor guide]: https://github.com/statisticsnorway/ssb-vaskify/blob/main/CONTRIBUTING.md
-[reference guide]: https://statisticsnorway.github.io/ssb-vaskify/reference.html
+[reference guide]: https://statisticsnorway.github.io/ssb-vaskify/guide.html

@@ -13,7 +13,7 @@ end-before: <!-- github-only -->
 hidden:
 maxdepth: 1
 ---
-
+Guide to vaskify <./guide.md>
 reference
 contributing
 Code of Conduct <codeofconduct>
