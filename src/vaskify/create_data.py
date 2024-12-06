@@ -1,4 +1,3 @@
-
 # %%
 # Functions to create data
 
@@ -22,16 +21,13 @@ def create_test_data(
     Returns:
         pd.DataFrame: Test data in long format.
     """
-    if seed:
-        rng = np.random.default_rng(seed)
-    else:
-        rng = np.random.default_rng(12345)  #### work on this
+    rng = np.random.default_rng(seed) if seed else np.random.default_rng()
 
     company_ids = np.array(range(n))
 
     # Generate unique industry codes (NACE)
     industry_codes = ["B", "C", "F", "G", "H", "J", "M", "N", "S"]
-    industries = np.random.choice(industry_codes, size=n, replace=True)
+    industries = rng.choice(industry_codes, size=n, replace=True)
 
     # Generate time periods
     if freq == "monthly":
@@ -64,9 +60,9 @@ def create_test_data(
     data["nace"] = data["id_company"].map(nace_mapping)
 
     # Generate random number of employees and turnover
-    data["employees"] = np.random.randint(10, 500, size=len(data))
+    data["employees"] = rng.integers(10, 500, size=len(data))
 
     # Calculate turnover based on number of employees, with some random variation
-    data["turnover"] = np.round(data["employees"] * np.random.uniform(20000, 5000), 2)
+    data["turnover"] = np.round(data["employees"] * rng.uniform(20000, 5000), 2)
 
     return data

@@ -1,5 +1,3 @@
-
-
 # %% [markdown]
 # # Functions for controlling data to identify possible errors
 # To do:
@@ -10,10 +8,10 @@
 # - Documentation
 
 # %%
-import numpy as np
-import pandas as pd
 import logging
 
+import numpy as np
+import pandas as pd
 
 
 # %%
@@ -37,28 +35,39 @@ class Detect:
         self.id_nr = id_nr
 
         # Set up logging - doesn't need to be self - global
-        logger_level="info"
-        logging_dict={"debug":10,"info":20,"warning":30,"error":40,"critical":50}
+        logger_level = "info"
+        logging_dict = {
+            "debug": 10,
+            "info": 20,
+            "warning": 30,
+            "error": 40,
+            "critical": 50,
+        }
         logger = logging.getLogger("detect")
         logger.setLevel(logging_dict[logger_level])
-        
+
         # add in console handling
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging_dict[logger_level])
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
-        
 
     def change_logging_level(self, logger_level: str) -> None:
         """Change the logging print level.
+
         Args:
             logger_level: Detail level for information output. Choose between 'debug','info','warning','error' and 'critical'.
         """
-        logger = logging.getLogger('detect')
-        logging_dict={"debug":10,"info":20,"warning":30,"error":40,"critical":50}
+        logger = logging.getLogger("detect")
+        logging_dict = {
+            "debug": 10,
+            "info": 20,
+            "warning": 30,
+            "error": 40,
+            "critical": 50,
+        }
         logger.setLevel(logging_dict[logger_level])
-        logger.info("hello")
 
     def thousand_error(
         self,
@@ -86,9 +95,12 @@ class Detect:
         Return:
             Data frame with flags or identified units
         """
-        logger = logging.getLogger('detect')
-        if not impute_var:
+        logger = logging.getLogger("detect")
+        if (not impute_var) and (impute):
             impute_var = f"{y_var}_imputed"
+            mes = f"No impute variable given so using {impute_var}"
+            logger.info(mes)
+
         # check data - add in
 
         # Find differences by sorting first - not efficient but works
@@ -147,10 +159,11 @@ class Detect:
         Return:
             Data frame with flags or identified units
         """
-        logger = logging.getLogger('detect')
+        logger = logging.getLogger("detect")
         if (not impute_var) and (impute):
             impute_var = f"{y_var}_imputed"
-            logger.info(f'No imputed variable name given so {impute_var} is being used')
+            mes = f"No imputed variable name given so {impute_var} is being used"
+            logger.info(mes)
 
         # check data
 
@@ -170,7 +183,7 @@ class Detect:
         # Impute - not implemented
         if impute:
             mes = "Imputation not implemented for this method."
-            raise ValueError(mes)
+            logger.error(mes)
 
         if output_format == "data":
             output = data
@@ -180,8 +193,8 @@ class Detect:
                 .apply(lambda x: ((x == 1) | x.isna()).all())
                 .reset_index()
             )
-            logger.info(f"Number of units identified with possible accumulation errors: {flagged_ids[flag].sum()}")
-            logger.info("accum")
+            mes = f"Number of units identified with possible accumulation errors: {flagged_ids[flag].sum()}"
+            logger.info(mes)
             ids_with_flag_all_periods = flagged_ids[flagged_ids[flag]][self.id_nr]
             mask_units = data[self.id_nr].isin(ids_with_flag_all_periods)
             output = data.loc[mask_units, :]
@@ -215,6 +228,8 @@ class Detect:
         Return:
             Dataframe with flags or with identified units
         """
+        logger = logging.getLogger("detect")
+
         # check data ...
         data = self.data.copy()
 
@@ -222,15 +237,16 @@ class Detect:
         time_levels = data[time_var].unique()
         if len(time_levels) != 2:
             mes = "The time variable must have exactly two unique levels."
-            raise ValueError(mes)
+            logger.error(mes)
         x1 = time_levels[1]  # t
         x2 = time_levels[0]  # t-1
 
         # Convert to wide
-        wide_data = data.pivot(
+        wide_data = data.pivot_table(
             index=self.id_nr,
             columns=time_var,
             values=y_var,
+            aggfunc="first",
         ).reset_index()
         wide_data.columns.name = None
 
@@ -238,7 +254,7 @@ class Detect:
         valid_rows = wide_data[(wide_data[x1] > 0) & (wide_data[x2] > 0)]
         if valid_rows.empty:
             mes = "No valid rows with y_var > 0 for both time periods."
-            raise ValueError(mes)
+            logger.error(mes)
 
         # Calculate the ratio and related metrics
         valid_rows["ratio"] = valid_rows[x1] / valid_rows[x2]
@@ -277,7 +293,7 @@ class Detect:
             mask_units = valid_rows[flag] == 1
             output = valid_rows.loc[mask_units, :]
             if output.shape[0] == 0:
-                logger.info('No outliers detected')
+                logger.info("No outliers detected")
 
         if output_format == "long":
             output = output.melt(
@@ -287,4 +303,3 @@ class Detect:
                 value_name=y_var,
             )
         return output
-
