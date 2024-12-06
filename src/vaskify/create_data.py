@@ -15,7 +15,8 @@ def create_test_data(
 
     Parameters:
         n (int): Number of unique companies to create.
-        num_periods (int): Number of time periods.
+        n_periods (int): Number of time periods to create.
+        freq (str): Frequency of the time periods: 'monthly', 'quarterly' or 'yearly'.
         seed (int): Random seed for reproducibility.
 
     Returns:
@@ -63,6 +64,8 @@ def create_test_data(
     data["employees"] = rng.integers(10, 500, size=len(data))
 
     # Calculate turnover based on number of employees, with some random variation
-    data["turnover"] = np.round(data["employees"] * rng.uniform(20000, 5000), 2)
+    data["turnover"] = np.round(
+        data["employees"] * rng.uniform(5000, 20000), 2
+    )  # check if all get same random or not...
 
     return data

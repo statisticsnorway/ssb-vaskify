@@ -92,8 +92,8 @@ class Detect:
             impute_var: String for the name of the imputed variable.
             output_format: String for whether to return a data frame 'data', or just the identified outlier units 'outliers'.
 
-        Return:
-            Data frame with flags or identified units
+        Returns:
+            Data frame containing a flag variable for identified outliers or a dataframe containing only the outliers.
         """
         logger = logging.getLogger("detect")
         if (not impute_var) and (impute):
@@ -125,13 +125,15 @@ class Detect:
 
         # return data if output_format is data
         if output_format == "data":
-            output = data
+            output: pd.DataFrame = data
 
         # select outlier units and return only them if output_format is outliers
-        if output_format == "outliers":
+        elif output_format == "outliers":
             outlier_ids = data.loc[mask_outlier, self.id_nr]
             mask_outlier_units = data[self.id_nr].isin(outlier_ids)
             output = data.loc[mask_outlier_units, :]
+        else:
+            logger.warning("output_format is not valid. Use 'data' or 'outliers'")
 
         return output
 
@@ -156,8 +158,8 @@ class Detect:
             impute_var: String for the name of the imputed variable.
             output_format: String for whether to return a data frame 'data', or just the identified outlier units 'outliers'.
 
-        Return:
-            Data frame with flags or identified units
+        Returns:
+            Data frame containing a flag variable for identified outliers or a dataframe containing only the outliers.
         """
         logger = logging.getLogger("detect")
         if (not impute_var) and (impute):
@@ -186,8 +188,8 @@ class Detect:
             logger.error(mes)
 
         if output_format == "data":
-            output = data
-        if output_format == "outliers":
+            output: pd.DataFrame = data
+        elif output_format == "outliers":
             flagged_ids = (
                 data.groupby(self.id_nr)[flag]
                 .apply(lambda x: ((x == 1) | x.isna()).all())
@@ -198,6 +200,8 @@ class Detect:
             ids_with_flag_all_periods = flagged_ids[flagged_ids[flag]][self.id_nr]
             mask_units = data[self.id_nr].isin(ids_with_flag_all_periods)
             output = data.loc[mask_units, :]
+        else:
+            logger.warning("output_format is not valid. Use 'data' or 'outliers'")
 
         return output
 
@@ -224,8 +228,9 @@ class Detect:
             pc: Parameter that controls the width of the confidence interval. Default value 4.
             percentiles: Tuple for percentile values to use.
             flag: String variable name to use to indicate outliers.
-            output_format: String for format to return. Can be 'wide','long','outliers'
-        Return:
+            output_format: String for format to return. Can be 'wide','long','outliers'.
+
+        Returns:
             Dataframe with flags or with identified units
         """
         logger = logging.getLogger("detect")
@@ -288,18 +293,22 @@ class Detect:
             0,
         )
         if output_format == "wide":
-            output = valid_rows
-        if output_format == "outliers":
+            output: pd.DataFrame = valid_rows
+        elif output_format == "outliers":
             mask_units = valid_rows[flag] == 1
             output = valid_rows.loc[mask_units, :]
             if output.shape[0] == 0:
                 logger.info("No outliers detected")
-
-        if output_format == "long":
-            output = output.melt(
+        elif output_format == "long":
+            output = valid_rows.melt(
                 id_vars=[self.id_nr, "ratio", "lower_limit", "upper_limit", flag],
                 value_vars=time_levels,
                 var_name=time_var,
                 value_name=y_var,
             )
+        else:
+            logger.warning(
+                "output_format is not valid. Use 'wide' or 'outliers' or 'long'",
+            )
+
         return output

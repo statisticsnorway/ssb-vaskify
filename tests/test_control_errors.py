@@ -21,7 +21,7 @@ def test_accumulation_error() -> None:
     assert any(
         dt_controlled.columns.isin(["flag_accumulation"]),
     ), "Flag variable created"
-    expected_value = 2
+    expected_value = 1
     assert (
         dt_controlled.flag_accumulation.sum() == expected_value
     ), "Potential errors flagged"
