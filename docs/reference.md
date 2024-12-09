@@ -13,21 +13,21 @@ delete the .rst file afterwards.
 
 ```{eval-rst}
 vaskify package
-=============================================================================
+===============
 
 
-vaskify.control_errors module
------------------------------------------------------------------------------
+vaskify.create\_test\_data module
+---------------------------------
 
-.. automodule:: vaskify.control_errors
+.. automodule:: vaskify.create_test_data
    :members:
    :undoc-members:
    :show-inheritance:
 
-vaskify.create_data module
------------------------------------------------------------------------------
+vaskify.detect module
+---------------------
 
-.. automodule:: vaskify.create_data
+.. automodule:: vaskify.detect
    :members:
    :undoc-members:
    :show-inheritance:
