@@ -34,8 +34,6 @@ class Detect:
         self.data = data
         self.id_nr = id_nr
 
-        # Set up logging - doesn't need to be self - global
-        logger_level = "info"
         logging_dict = {
             "debug": 10,
             "info": 20,
@@ -43,15 +41,16 @@ class Detect:
             "error": 40,
             "critical": 50,
         }
-        logger = logging.getLogger("detect")
-        logger.setLevel(logging_dict[logger_level])
+        self.logger = logging.getLogger("detect")
+        self.logger.setLevel(logging_dict[logger_level])
 
         # add in console handling
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging_dict[logger_level])
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
+        if not self.logger.handlers:  # Avoid adding multiple handlers
+            formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging_dict[logger_level])
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
 
     def change_logging_level(self, logger_level: str) -> None:
         """Change the logging print level.
@@ -59,7 +58,6 @@ class Detect:
         Args:
             logger_level: Detail level for information output. Choose between 'debug','info','warning','error' and 'critical'.
         """
-        logger = logging.getLogger("detect")
         logging_dict = {
             "debug": 10,
             "info": 20,
@@ -67,7 +65,7 @@ class Detect:
             "error": 40,
             "critical": 50,
         }
-        logger.setLevel(logging_dict[logger_level])
+        self.logger.setLevel(logging_dict[logger_level])
 
     def thousand_error(
         self,
@@ -95,11 +93,10 @@ class Detect:
         Returns:
             Data frame containing a flag variable for identified outliers or a dataframe containing only the outliers.
         """
-        logger = logging.getLogger("detect")
         if (not impute_var) and (impute):
             impute_var = f"{y_var}_imputed"
             mes = f"No impute variable given so using {impute_var}"
-            logger.info(mes)
+            self.logger.info(mes)
 
         # check data - add in
 
@@ -133,7 +130,7 @@ class Detect:
             mask_outlier_units = data[self.id_nr].isin(outlier_ids)
             output = data.loc[mask_outlier_units, :]
         else:
-            logger.warning("output_format is not valid. Use 'data' or 'outliers'")
+            self.logger.warning("output_format is not valid. Use 'data' or 'outliers'")
 
         return output
 
@@ -161,11 +158,10 @@ class Detect:
         Returns:
             Data frame containing a flag variable for identified outliers or a dataframe containing only the outliers.
         """
-        logger = logging.getLogger("detect")
         if (not impute_var) and (impute):
             impute_var = f"{y_var}_imputed"
             mes = f"No imputed variable name given so {impute_var} is being used"
-            logger.info(mes)
+            self.logger.info(mes)
 
         # check data
 
@@ -185,7 +181,7 @@ class Detect:
         # Impute - not implemented
         if impute:
             mes = "Imputation not implemented for this method."
-            logger.error(mes)
+            self.logger.error(mes)
 
         if output_format == "data":
             output: pd.DataFrame = data
@@ -196,12 +192,12 @@ class Detect:
                 .reset_index()
             )
             mes = f"Number of units identified with possible accumulation errors: {flagged_ids[flag].sum()}"
-            logger.info(mes)
+            self.logger.info(mes)
             ids_with_flag_all_periods = flagged_ids[flagged_ids[flag]][self.id_nr]
             mask_units = data[self.id_nr].isin(ids_with_flag_all_periods)
             output = data.loc[mask_units, :]
         else:
-            logger.warning("output_format is not valid. Use 'data' or 'outliers'")
+            self.logger.warning("output_format is not valid. Use 'data' or 'outliers'")
 
         return output
 
@@ -233,8 +229,6 @@ class Detect:
         Returns:
             Dataframe with flags or with identified units
         """
-        logger = logging.getLogger("detect")
-
         # check data ...
         data = self.data.copy()
 
@@ -242,7 +236,7 @@ class Detect:
         time_levels = np.unique(data[time_var])
         if len(time_levels) != 2:
             mes = "The time variable must have exactly two unique levels."
-            logger.error(mes)
+            self.logger.error(mes)
         x1 = time_levels[1]  # t
         x2 = time_levels[0]  # t-1
 
@@ -259,7 +253,7 @@ class Detect:
         valid_rows = wide_data[(wide_data[x1] > 0) & (wide_data[x2] > 0)]
         if valid_rows.empty:
             mes = "No valid rows with y_var > 0 for both time periods."
-            logger.error(mes)
+            self.logger.error(mes)
 
         # Calculate the ratio and related metrics
         valid_rows["ratio"] = valid_rows[x1] / valid_rows[x2]
@@ -298,7 +292,7 @@ class Detect:
             mask_units = valid_rows[flag] == 1
             output = valid_rows.loc[mask_units, :]
             if output.shape[0] == 0:
-                logger.info("No outliers detected")
+                self.logger.info("No outliers detected")
         elif output_format == "long":
             output = valid_rows.melt(
                 id_vars=[self.id_nr, "ratio", "lower_limit", "upper_limit", flag],
@@ -306,8 +300,9 @@ class Detect:
                 var_name=time_var,
                 value_name=y_var,
             )
+            # Add in NAs for first time period here ...
         else:
-            logger.warning(
+            self.logger.warning(
                 "output_format is not valid. Use 'wide' or 'outliers' or 'long'",
             )
 
