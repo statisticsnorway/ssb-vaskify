@@ -36,19 +36,19 @@ def create_test_data(
             start="2020-01-01",
             periods=n_periods,
             freq="ME",
-        ).strftime("%Y-M%#m")
+        ).to_period("M").astype(str)
     if freq == "quarterly":
         time_periods = pd.date_range(
             start="2020-01-01",
             periods=n_periods,
             freq="QE",
-        ).strftime("%Y-Q%q")
+        ).to_period("Q").astype(str)
     if freq == "yearly":
         time_periods = pd.date_range(
             start="2020-01-01",
             periods=n_periods,
             freq="YE",
-        ).strftime("%Y")
+        ).to_period("Y").astype(str)
 
     # Create Cartesian product of industries and periods
     data = pd.DataFrame(
