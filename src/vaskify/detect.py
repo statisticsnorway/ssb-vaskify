@@ -239,7 +239,7 @@ class Detect:
         data = self.data.copy()
 
         # Get time levesl
-        time_levels = data[time_var].unique()
+        time_levels = np.unique(data[time_var])
         if len(time_levels) != 2:
             mes = "The time variable must have exactly two unique levels."
             logger.error(mes)
