@@ -1,5 +1,5 @@
 # %%
-from vaskify import create_test_data
+from vaskify.createdata import create_test_data
 
 
 # %%
