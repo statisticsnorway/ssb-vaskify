@@ -14,7 +14,7 @@ License <license>
 Changelog <https://github.com/statisticsnorway/ssb-vaskify/releases>
 ```
 
-```{include} ./../README.md
+```{include} ../README.md
 ---
 start-after: <!-- badges-begin -->
 end-before: <!-- badges-end -->
