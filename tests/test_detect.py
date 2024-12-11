@@ -1,8 +1,8 @@
 # %%
 import logging
 
-from vaskify import Detect
-from vaskify import create_test_data
+from vaskify.createdata import create_test_data
+from vaskify.detect import Detect
 
 
 # %%
