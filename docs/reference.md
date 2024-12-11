@@ -16,10 +16,10 @@ vaskify package
 ===============
 
 
-vaskify.create\_test\_data module
----------------------------------
+vaskify.createdata module
+-------------------------
 
-.. automodule:: vaskify.create_test_data
+.. automodule:: vaskify.createdata
    :members:
    :undoc-members:
    :show-inheritance:
