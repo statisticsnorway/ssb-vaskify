@@ -81,4 +81,6 @@ def create_test_data(
         2,
     )  # check if all get same random or not...
 
+    data["id_company"] = data["id_company"].astype(str)
+
     return data
