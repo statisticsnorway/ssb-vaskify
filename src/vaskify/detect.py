@@ -12,6 +12,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import re
 
 
 # %%
@@ -31,9 +32,14 @@ class Detect:
             id_nr: String variable for the name of the variable to identify units with.
             logger_level: Detail level for information output. Choose between 'debug','info','warning','error' and 'critical'.
         """
+        # Check data
+        self._check_data(data, id_nr= id_nr)
+
+        # Create self variables
         self.data = data
         self.id_nr = id_nr
 
+        # Start logging
         logging_dict = {
             "debug": 10,
             "info": 20,
@@ -52,6 +58,45 @@ class Detect:
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
 
+
+    
+    @staticmethod
+    def _check_data(data: pd.DataFrame, y_var: str = "", time_var: str = "", id_nr: str="") -> None:
+        """
+        Check if the data contains the necessary columns, correct data types, and valid date format.
+    
+        Args:
+            data: The DataFrame to check.
+            y_var: The variable of interest to check.
+            time_var: String variable for indicating the time period.
+            id_nr: String variable for the identifier.
+    
+        Raises:
+            ValueError: If any of the checks fail.
+        """
+        required_columns = [y_var, time_var, id_nr]
+        for col in required_columns:
+            if col:
+                if col not in data.columns:
+                    raise ValueError(f"Missing column: {col}")
+        if id_nr:
+            if not pd.api.types.is_string_dtype(data[id_nr]):
+                raise ValueError(f"{id_nr} should be a string.")
+        if y_var:
+            if not pd.api.types.is_numeric_dtype(data[y_var]):
+                raise ValueError(f"{y_var} should be numeric.")
+    
+        if time_var:
+            if not pd.api.types.is_string_dtype(data[time_var]):
+                raise ValueError(f"{time_var} should be a string.")
+    
+            date_format_pattern = re.compile(
+                r'^\d{4}(-\d{2}(-\d{2})?|-(Q[1-4]|W(0[1-9]|[1-4][0-9]|5[0-3]))|-\d{3)$')
+    
+            if not data[time_var].apply(lambda x: bool(date_format_pattern.match(x))).all():
+                raise ValueError(f"{time_var} should be in the format 'YYYY', 'YYYY-Qq', 'YYYY-MM','YYYY-Www','YYYY-MM-DD', 'YYYY-DDD'.")
+
+    
     def change_logging_level(self, logger_level: str) -> None:
         """Change the logging print level.
 
@@ -66,6 +111,7 @@ class Detect:
             "critical": 50,
         }
         self.logger.setLevel(logging_dict[logger_level])
+
 
     def thousand_error(
         self,
@@ -82,7 +128,7 @@ class Detect:
 
         Args:
             y_var: The variable of insterest to check.
-            time_var: String variable for indicating the time period. This should be in a standard format: 'YYYY', 'YYYY-Mm', 'YYYY-Kk'.
+            time_var: String variable for indicating the time period. This should be in a ISO 8601 standard format for example: 'YYYY', 'YYYY-MM', 'YYYY-MM-DD' or a SSB standard like 'YYYY-Qq'.
             lower_bound: Float variable for the lower bound log factor for defining an outlier.
             upper_bound: Float variable for the upper bound log factor for defining an outlier.
             flag: String for the name of the flag variable to add to the data. Default is 'flag_thousand'.
@@ -93,12 +139,13 @@ class Detect:
         Returns:
             Data frame containing a flag variable for identified outliers or a dataframe containing only the outliers.
         """
+        # Check data
+        self._check_data(self.data, y_var = y_var, time_var = time_var)
+        
         if (not impute_var) and (impute):
             impute_var = f"{y_var}_imputed"
             mes = f"No impute variable given so using {impute_var}"
             self.logger.info(mes)
-
-        # check data - add in
 
         # Find differences by sorting first - not efficient but works
         data = self.data.sort_values(by=[self.id_nr, time_var]).reset_index(drop=True)
@@ -148,7 +195,7 @@ class Detect:
 
         Args:
             y_var: The variable of insterest to check.
-            time_var: String variable for indicating the time period. This should be in a standard format: 'YYYY', 'YYYY-Mm', 'YYYY-Kk'.
+            time_var: String variable for indicating the time period. This should be in a ISO 8601 standard format for example: 'YYYY', 'YYYY-MM', 'YYYY-MM-DD' or a SSB standard like 'YYYY-Qq'.
             error: Float for the allowed error factor.
             flag: String for the name of the flag variable to add to the data. Default is 'flag_thousand'.
             impute: Boolean for whether to impute the flagged observations. Default is False. (NOT IMPLEMENTED)
@@ -158,6 +205,9 @@ class Detect:
         Returns:
             Data frame containing a flag variable for identified outliers or a dataframe containing only the outliers.
         """
+        # Check data
+        self._check_data(self.data, y_var = y_var, time_var = time_var)
+        
         if (not impute_var) and (impute):
             impute_var = f"{y_var}_imputed"
             mes = f"No imputed variable name given so {impute_var} is being used"
@@ -200,11 +250,42 @@ class Detect:
             self.logger.warning("output_format is not valid. Use 'data' or 'outliers'")
 
         return output
+        
+    @staticmethod
+    def _calculate_hb(x1, x2, y_var, pu, pa, pc, percentiles):
+        
+        rat = x1 / x2
+        med_ratio = rat.median()
+        s_ratio = np.where(
+            rat >= med_ratio,
+            rat / med_ratio - 1,
+            1 - med_ratio / rat,
+        )
+    
+        max_y = pd.concat([x1, x2], axis=1).max(axis=1)
+        e_ratio = s_ratio * max_y**pu
+    
+        e_ratio_q = e_ratio.quantile([percentiles[0], 0.5, percentiles[1]]).to_numpy()
+        q1, q2, q3 = e_ratio_q
+    
+        if q2 != 0:
+            ell = q2 - pc * max(q2 - q1, abs(q2 * pa))
+            eul = q2 + pc * max(q3 - q2, abs(q2 * pa))
+        else:
+            ell = q2 - pc * max(q2 - q1, pa)
+            eul = q2 + pc * max(q3 - q2, pa)
+    
+        lower_limit = med_ratio * max_y**pu / (max_y**pu - ell)
+        upper_limit = med_ratio * (max_y**pu + eul) / max_y**pu
+        
+        return (lower_limit, upper_limit)
+
 
     def hb(
         self,
         y_var: str,
         time_var: str,
+        strat_var: str = "",
         pu: float = 0.5,
         pa: float = 0.05,
         pc: float = 20,
@@ -218,7 +299,8 @@ class Detect:
 
         Args:
             y_var: String for the name of the variable of interest to check.
-            time_var: String variable for indicating the time period. This should be in a standard format: 'YYYY', 'YYYY-Mm', 'YYYY-Kk'.
+            time_var: String variable for indicating the time period. This should be in a ISO 8601 standard format for example: 'YYYY', 'YYYY-MM', 'YYYY-MM-DD' or a SSB standard like 'YYYY-Qq'.
+            strat_var: String variable for stratification. Default is blank ("").
             pu: Parameter that adjusts for different level of the variables. Default value 0.5.
             pa: Parameter that adjusts for small differences between the median and the 1st or 3rd quartile. Default value 0.05.
             pc: Parameter that controls the width of the confidence interval. Default value 4.
@@ -229,7 +311,8 @@ class Detect:
         Returns:
             Dataframe with flags or with identified units
         """
-        # check data ...
+        # Check data
+        self._check_data(self.data, y_var = y_var, time_var = time_var)
         data = self.data.copy()
 
         # Get time levesl
@@ -238,7 +321,7 @@ class Detect:
             mes = "The time variable must have exactly two unique levels."
             self.logger.error(mes)
         x1 = time_levels[1]  # t
-        x2 = time_levels[0]  # t-1
+        x0 = time_levels[0]  # t-1
 
         # Convert to wide
         wide_data = data.pivot_table(
@@ -250,42 +333,34 @@ class Detect:
         wide_data.columns.name = None
 
         # Check for valid rows
-        valid_rows = wide_data[(wide_data[x1] > 0) & (wide_data[x2] > 0)]
+        valid_rows = wide_data[(wide_data[x1] > 0) & (wide_data[x0] > 0)]
         if valid_rows.empty:
             mes = "No valid rows with y_var > 0 for both time periods."
             self.logger.error(mes)
 
-        # Calculate the ratio and related metrics
-        valid_rows["ratio"] = valid_rows[x1] / valid_rows[x2]
-        med_ratio = valid_rows["ratio"].median()
-        s_ratio = np.where(
-            valid_rows["ratio"] >= med_ratio,
-            valid_rows["ratio"] / med_ratio - 1,
-            1 - med_ratio / valid_rows["ratio"],
-        )
+        # Add in ratio
+        valid_rows["ratio"] = valid_rows[x1] / valid_rows[x0]
 
-        max_y = valid_rows[[x1, x2]].max(axis=1)
-        e_ratio = s_ratio * max_y**pu
-
-        # Compute quantiles for e ratio
-        percentiles = (0.25, 0.75)  # Can also be 0.1, 0.9
-        e_ratio_q = e_ratio.quantile([percentiles[0], 0.5, percentiles[1]]).to_numpy()
-        q1, q2, q3 = e_ratio_q
-
-        if q2 != 0:
-            ell = q2 - pc * max(q2 - q1, abs(q2 * pa))
-            eul = q2 + pc * max(q3 - q2, abs(q2 * pa))
+        # Apply the HB function to each strata group
+        if strat_var:
+            limits = valid_rows.groupby(strat_var).apply(
+                lambda group: _calculate_hb(group[x1], group[x0], pu, pa, pc, percentiles)
+            ).reset_index(level=strat_var, drop=True)
         else:
-            ell = q2 - pc * max(q2 - q1, pa)
-            eul = q2 + pc * max(q3 - q2, pa)
-        valid_rows["lower_limit"] = med_ratio * max_y**pu / (max_y**pu - ell)
-        valid_rows["upper_limit"] = med_ratio * (max_y**pu + eul) / max_y**pu
+            limits = _calculate_hb(valid_rows[x1], valid_rows[x0], pu, pa, pc, percentiles)
+
+        # Merge the limits back into the valid_rows
+        valid_rows = valid_rows.join(limits)
+
+        # Add in flag
         valid_rows[flag] = np.where(
             (valid_rows["ratio"] < valid_rows["lower_limit"])
             | (valid_rows["ratio"] > valid_rows["upper_limit"]),
             1,
             0,
         )
+        
+        # Format in correct output format
         if output_format == "wide":
             output: pd.DataFrame = valid_rows
         elif output_format == "outliers":
@@ -299,11 +374,10 @@ class Detect:
                 value_vars=time_levels,
                 var_name=time_var,
                 value_name=y_var,
-            )
-            # Add in NAs for first time period here ...
+            ) # Add in NAs for first time period here ...
         else:
             self.logger.warning(
-                "output_format is not valid. Use 'wide' or 'outliers' or 'long'",
+                "output_format is not valid. Use 'wide', 'outliers' or 'long'",
             )
 
         return output
