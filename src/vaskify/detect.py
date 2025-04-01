@@ -260,7 +260,14 @@ class Detect:
         return output
 
     @staticmethod
-    def _calculate_hb(x1, x2, pu, pa, pc, percentiles):  # type: ignore
+    def _calculate_hb(
+        x1: pd.Series,  # type: ignore[type-arg]
+        x2: pd.Series,  # type: ignore[type-arg]
+        pu: float,
+        pa: float,
+        pc: float,
+        percentiles: tuple[float, float],
+    ) -> pd.DataFrame:
         """Calculate HB method."""
         rat = x1 / x2
         med_ratio = rat.median()
@@ -312,7 +319,7 @@ class Detect:
             strata_var: String variable for stratification. Default is blank ("").
             pu: Parameter that adjusts for different level of the variables. Default value 0.5.
             pa: Parameter that adjusts for small differences between the median and the 1st or 3rd quartile. Default value 0.05.
-            pc: Parameter that controls the width of the confidence interval. Default value 4.
+            pc: Parameter that controls the width of the confidence interval. Default value 20.
             percentiles: Tuple for percentile values to use.
             flag: String variable name to use to indicate outliers.
             output_format: String for format to return. Can be 'wide','long','outliers'.
@@ -365,12 +372,26 @@ class Detect:
             limits = (
                 valid_rows.groupby(strata_var)
                 .apply(
-                    lambda group: self._calculate_hb(group[time1], group[time0], pu, pa, pc, percentiles),  # type: ignore
+                    lambda group: self._calculate_hb(
+                        group[time1],
+                        group[time0],
+                        pu,
+                        pa,
+                        pc,
+                        percentiles,
+                    ),
                 )
                 .reset_index(level=strata_var, drop=True)
             )
         else:
-            limits = self._calculate_hb(valid_rows[time1], valid_rows[time0], pu, pa, pc, percentiles)  # type: ignore
+            limits = self._calculate_hb(
+                valid_rows[time1],
+                valid_rows[time0],
+                pu,
+                pa,
+                pc,
+                percentiles,
+            )
 
         # Merge the limits back into the valid_rows
         valid_rows = valid_rows.merge(
