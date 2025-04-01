@@ -67,6 +67,39 @@ def test_hb() -> None:
     assert dt_controlled.shape[0] == expected_shape, "Long format returned"
 
 
+def test_hb_strata() -> None:
+    dt = create_test_data(n=50, seed=10)
+    dt2 = dt.loc[dt.time_period.isin(["2020-04", "2020-05"]), :]
+
+    detect = Detect(dt2, id_nr="id_company")
+    dt_controlled = detect.hb(
+        y_var="turnover",
+        time_var="time_period",
+        strata_var="nace",
+    )
+
+    assert any(dt_controlled.columns.isin(["flag_hb"])), "Flag variable created"
+    expected_shape = 50
+    assert dt_controlled.shape[0] == expected_shape, "Wide format returned as default"
+
+    dt_controlled = detect.hb(
+        y_var="turnover",
+        strata_var="nace",
+        time_var="time_period",
+        output_format="outliers",
+    )
+    expected_shape = 2
+    assert dt_controlled.shape[0] == expected_shape, "Oulier format returned"
+
+    dt_controlled = detect.hb(
+        y_var="turnover",
+        time_var="time_period",
+        output_format="long",
+    )
+    expected_shape = 100
+    assert dt_controlled.shape[0] == expected_shape, "Long format returned"
+
+
 # %%
 def test_logger() -> None:
     dt = create_test_data(n=5, n_periods=2, freq="monthly", seed=42)
