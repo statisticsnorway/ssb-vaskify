@@ -95,7 +95,7 @@ class Detect:
                 raise ValueError(mes)
 
             date_format_pattern = re.compile(
-                r"^\d{4}(-\d{2}(-\d{2})?|-(Q[1-4]|W(0[1-9]|[1-4][0-9]|5[0-3]))|-\d{3)$",
+                r"^\d{4}(-(\d{2}(-\d{2})?|Q[1-4]|W(0[1-9]|[1-4][0-9]|5[0-3])|\d{3}))?$",
             )
 
             if (
