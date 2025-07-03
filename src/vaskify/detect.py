@@ -261,8 +261,8 @@ class Detect:
 
     @staticmethod
     def _calculate_hb(
-        x1: pd.Series,  # type: ignore[type-arg]
-        x2: pd.Series,  # type: ignore[type-arg]
+        x1: pd.Series,
+        x2: pd.Series,
         pu: float,
         pa: float,
         pc: float,
