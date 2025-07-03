@@ -73,10 +73,10 @@ def test_hb_year() -> None:
     dt_controlled = detect.hb(y_var="turnover", time_var="time_period")
 
     assert any(dt_controlled.columns.isin(["flag_hb"])), "Flag variable created"
-    expected_shape = 5,7
+    expected_shape = 5, 7
     assert dt_controlled.shape == expected_shape, "Wide format returned as default"
 
-    
+
 def test_hb_strata() -> None:
     dt = create_test_data(n=50, seed=10)
     dt2 = dt.loc[dt.time_period.isin(["2020-04", "2020-05"]), :]
