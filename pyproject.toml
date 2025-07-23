@@ -1,6 +1,6 @@
 [project]
 name = "ssb-vaskify"
-version = "0.0.3"
+version = "0.0.4"
 description = "Functions for control and editing of data in official statistics."
 authors = [{ name = "Susie Jentoft", email = "susie.jentoft@ssb.no" }]
 license = "MIT"
