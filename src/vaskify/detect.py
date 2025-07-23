@@ -59,7 +59,48 @@ class Detect:
             self.logger.addHandler(console_handler)
 
     @staticmethod
+    def _is_valid_date_format(date_str: str) -> bool:
+        """Check if a date string matches one of the accepted ISO-like formats.
+
+        Supported formats include:
+            - YYYY (e.g., 2025)
+            - YYYY-MM (e.g., 2025-07)
+            - YYYY-MM-DD (e.g., 2025-07-23)
+            - YYYY-Q[1-4] (e.g., 2025-Q3)
+            - YYYY-Www (ISO week, e.g., 2025-W31)
+            - YYYY-DDD (ordinal date, e.g., 2025-204)
+
+        Parameters
+        ----------
+        date_str : str
+            The date string to validate.
+
+        Returns:
+        -------
+        bool
+            True if the date string matches one of the allowed formats, False otherwise.
+        """
+        year_pattern = re.compile(r"^\d{4}$")
+        year_month_pattern = re.compile(r"^\d{4}-\d{2}$")
+        year_month_day_pattern = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+        year_quarter_pattern = re.compile(r"^\d{4}-Q[1-4]$")
+        year_week_pattern = re.compile(r"^\d{4}-W(0[1-9]|[1-4][0-9]|5[0-3])$")
+        year_ordinal_pattern = re.compile(r"^\d{4}-\d{3}$")
+
+        return any(
+            pattern.match(date_str)
+            for pattern in [
+                year_pattern,
+                year_month_pattern,
+                year_month_day_pattern,
+                year_quarter_pattern,
+                year_week_pattern,
+                year_ordinal_pattern,
+            ]
+        )
+
     def _check_data(
+        self,
         data: pd.DataFrame,
         y_var: str = "",
         time_var: str = "",
@@ -94,15 +135,7 @@ class Detect:
                 mes = f"{time_var} should be a string."
                 raise ValueError(mes)
 
-            date_format_pattern = re.compile(
-                r"^\d{4}(-\d{2}(-\d{2})?|-(Q[1-4]|W(0[1-9]|[1-4][0-9]|5[0-3]))|-\d{3)$",
-            )
-
-            if (
-                not data[time_var]
-                .apply(lambda x: bool(date_format_pattern.match(x)))
-                .all()
-            ):
+            if not data[time_var].apply(self._is_valid_date_format).all():
                 mes = f"{time_var} should be in the format 'YYYY', 'YYYY-Qq', 'YYYY-MM','YYYY-Www','YYYY-MM-DD', 'YYYY-DDD'."
                 raise ValueError(mes)
 
@@ -261,8 +294,8 @@ class Detect:
 
     @staticmethod
     def _calculate_hb(
-        x1: pd.Series,  # type: ignore[type-arg]
-        x2: pd.Series,  # type: ignore[type-arg]
+        x1: pd.Series,
+        x2: pd.Series,
         pu: float,
         pa: float,
         pc: float,

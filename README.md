@@ -18,7 +18,6 @@
 [pypi status]: https://pypi.org/project/ssb-vaskify/
 [documentation]: https://statisticsnorway.github.io/ssb-vaskify
 [tests]: https://github.com/statisticsnorway/ssb-vaskify/actions?workflow=Tests
-
 [sonarcov]: https://sonarcloud.io/summary/overall?id=statisticsnorway_ssb-vaskify
 [sonarquality]: https://sonarcloud.io/summary/overall?id=statisticsnorway_ssb-vaskify
 [pre-commit]: https://github.com/pre-commit/pre-commit
