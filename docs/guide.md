@@ -5,7 +5,7 @@ The package `vaskify` has been created to help with data control and editing pro
 ## Installation
 The package is on PyPI can be installed in a poetry environment by running the following in a terminal:
 ```bash
-poetry install ssb-vaskify
+poetry add ssb-vaskify
 ```
 
 ## Import error detection functions (`Detect`)
