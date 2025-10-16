@@ -51,6 +51,7 @@ def create_test_data(
             .to_period("Q")
             .astype(str)
         )
+        time_periods = [f"{p[:4]}-Q{p[5:]}" for p in time_periods]
     if freq == "yearly":
         time_periods = (
             pd.date_range(
