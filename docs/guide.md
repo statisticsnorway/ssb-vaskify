@@ -40,6 +40,11 @@ In panel establishment surveys, companies will sometimes accidentally report an 
 ```python
 det.accumulation_error(y_var="turnover", time_var="time_period")
 ```
+This returns data with an extra variable "flag_accumulation" containing a flag (0/1) for whether observations are higher than expected. To return only the units where all time periods are higher than expected, as is the case in accumulation errors, use the `output_format` parameter:
+
+```python
+det.accumulation_error(y_var="turnover", time_var="time_period", output_format="outliers")
+```
 
 ## Check for outliers using the HB-method
 Hidiroglou-Berthelot (HB) method is a popular tool for detecting outliers in data in establishment surveys. It is a data driven approach to determine the parameters for edits. [Winkler et. al. ](http://www.asasrms.org/Proceedings/y2023/files/HB_JSM_2023.pdf) provide a nice summary evaluating the method.
