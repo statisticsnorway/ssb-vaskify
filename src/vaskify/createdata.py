@@ -22,6 +22,10 @@ def create_test_data(
 
     Returns:
         pd.DataFrame: Test data in long format.
+
+    Raises:
+        ValueError: If `freq` is not one of "monthly", "quarterly", or "yearly".
+
     """
     rng = np.random.default_rng(seed) if seed else np.random.default_rng()
 
@@ -31,40 +35,21 @@ def create_test_data(
     industry_codes = ["B", "C", "F", "G", "H", "J", "M", "N", "S"]
     industries = rng.choice(industry_codes, size=n, replace=True)
 
-    # Generate time periods
+    # Generate time periods as List[str]
     if freq == "monthly":
-        time_periods = (
-            pd.date_range(
-                start="2020-01-01",
-                periods=n_periods,
-                freq="ME",
-            )
-            .to_period("M")
-            .astype(str)
-        )
-    if freq == "quarterly":
-        time_periods_str = (
-            pd.date_range(
-                start="2020-01-01",
-                periods=n_periods,
-                freq="QE",
-            )
-            .to_period("Q")
-            .astype(str)
-        )
-        time_periods = [f"{p[:4]}-Q{p[5:]}" for p in time_periods_str.tolist()]
-    if freq == "yearly":
-        time_periods = (
-            pd.date_range(
-                start="2020-01-01",
-                periods=n_periods,
-                freq="YE",
-            )
-            .to_period("Y")
-            .astype(str)
-        )
+        periods = pd.period_range(start="2020-01-01", periods=n_periods, freq="M")
+        time_periods: list[str] = [f"{p.year}-{p.month:02d}" for p in periods]
+    elif freq == "quarterly":
+        periods = pd.period_range(start="2020-01-01", periods=n_periods, freq="Q-DEC")
+        time_periods = [f"{p.year}-Q{p.quarter}" for p in periods]
+    elif freq == "yearly":
+        periods = pd.period_range(start="2020-01-01", periods=n_periods, freq="Y")
+        time_periods = [f"{p.year}" for p in periods]
+    else:
+        mes = "freq must be one of: 'monthly', 'quarterly', 'yearly'"
+        raise ValueError(mes)
 
-    # Create Cartesian product of industries and periods
+    # Create product of industries and periods
     data = pd.DataFrame(
         [(id_company, period) for id_company in company_ids for period in time_periods],
         columns=["id_company", "time_period"],
