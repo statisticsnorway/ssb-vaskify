@@ -1,6 +1,7 @@
 # %%
 # Functions to create data
 
+
 import numpy as np
 import pandas as pd
 
@@ -42,7 +43,7 @@ def create_test_data(
             .astype(str)
         )
     if freq == "quarterly":
-        time_periods = (
+        time_periods_str = (
             pd.date_range(
                 start="2020-01-01",
                 periods=n_periods,
@@ -51,7 +52,7 @@ def create_test_data(
             .to_period("Q")
             .astype(str)
         )
-        time_periods = [f"{p[:4]}-Q{p[5:]}" for p in time_periods.tolist()]
+        time_periods = [f"{p[:4]}-Q{p[5:]}" for p in time_periods_str.tolist()]
     if freq == "yearly":
         time_periods = (
             pd.date_range(
