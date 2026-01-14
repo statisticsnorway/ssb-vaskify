@@ -14,11 +14,11 @@ def create_test_data(
 ) -> pd.DataFrame:
     """Generate test data with columns: NACE, number of employees, turnover, time period.
 
-    Parameters:
-        n (int): Number of unique companies to create.
-        n_periods (int): Number of time periods to create.
-        freq (str): Frequency of the time periods: 'monthly', 'quarterly' or 'yearly'.
-        seed (int): Random seed for reproducibility.
+    Args:
+        n: Number of unique companies to create.
+        n_periods: Number of time periods to create.
+        freq: Frequency of the time periods: 'monthly', 'quarterly' or 'yearly'.
+        seed: Random seed for reproducibility.
 
     Returns:
         pd.DataFrame: Test data in long format.
