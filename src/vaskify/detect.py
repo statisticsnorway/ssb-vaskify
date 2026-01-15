@@ -70,15 +70,11 @@ class Detect:
             - YYYY-Www (ISO week, e.g., 2025-W31)
             - YYYY-DDD (ordinal date, e.g., 2025-204)
 
-        Parameters
-        ----------
-        date_str : str
-            The date string to validate.
+        Args:
+            date_str: The date string to validate.
 
         Returns:
-        -------
-        bool
-            True if the date string matches one of the allowed formats, False otherwise.
+            bool: True if the date string matches one of the allowed formats, False otherwise.
         """
         year_pattern = re.compile(r"^\d{4}$")
         year_month_pattern = re.compile(r"^\d{4}-\d{2}$")
