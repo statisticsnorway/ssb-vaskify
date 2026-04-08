@@ -31,8 +31,8 @@ from vaskify import Detect, create_test_data
 import logging
 
 # %%
-dt = create_test_data(10, n_periods=2, freq="yearly", seed=4)
-dt2 = create_test_data(10, n_periods=3, freq="yearly", seed=4, wide = True)
+dt = create_test_data(5, n_periods=2, freq="yearly", seed=42)
+dt2 = create_test_data(5, n_periods=2, freq="yearly", seed=42, wide = True)
 
 det = Detect(dt, id_nr="id_company", logger_level="debug")
 det2 = Detect(dt2, id_nr="id_company", logger_level="debug")
@@ -43,13 +43,28 @@ det.change_logging_level("debug")
 # ### thousand error
 
 # %%
-det.thousand_error(y_var="turnover", time_var="time_period", impute = True).head()
+df_long = det.thousand_error(y_var="turnover", time_var="time_period")
+df_long.head()
 
 # %%
-det.thousand_error(y_var="turnover", time_var="time_period", output_format="outliers")
+det.thousand_error(y_var="turnover", time_var="time_period", impute = True)
 
 # %%
-det2.thousand_error(y_var=["turnover_2020", "turnover_2021", "turnover_2022"], impute = True).head(20)
+det2.thousand_error(y_var=["turnover_2020", "turnover_2021"], impute = True)
+
+# %%
+dt = create_test_data(n=5, n_periods=3, freq="yearly", seed=42, wide = True)
+detection = Detect(dt, id_nr="id_company")
+dt_controlled = detection.thousand_error(y_var=["turnover_2020", "turnover_2021", "turnover_2022"])
+
+# %%
+dt = create_test_data(n=5, n_periods=3, freq="monthly", seed=42)
+detection = Detect(dt, id_nr="id_company")
+dt_controlled = detection.thousand_error(y_var="turnover", time_var="time_period")
+dt_controlled
+
+
+# %%
 
 # %% [markdown]
 # ### Accumulation error
@@ -68,12 +83,45 @@ det.thousand_error(
 # ### HB
 
 # %%
-det.hb(y_var="turnover", time_var="time_period")
+from vaskify import Detect, create_test_data
+import logging
+dt = create_test_data(5, n_periods=2, freq="yearly", seed=4)
+det = Detect(dt, id_nr="id_company", logger_level="debug")
 
 # %%
-det.hb(y_var="turnover", time_var="time_period", output_format="outliers")
+det.hb(y_var="employees", time_var="time_period", output_format = "long")
 
 # %%
-det2.hb(y_var=["turnover_2020","turnover_2021"], strata_var = "nace")
+det.hb(y_var="turnover", time_var="time_period", output_format="wide")
+
+# %%
+det.hb(y_var="turnover", time_var = "time_period")
+
+# %%
+dt = create_test_data(n=50, seed=10)
+dt2 = dt.loc[dt.time_period.isin(["2020-04", "2020-05"]), :]
+detect = Detect(dt2, id_nr="id_company")
+dt_controlled = detect.hb(
+        y_var="turnover",
+        strata_var="nace",
+        time_var="time_period",
+        output_scope="outliers",
+    )
+dt_controlled
+
+# %% [markdown]
+# ### Quartile error
+
+# %%
+from vaskify import Detect, create_test_data
+import logging
+dt2 = create_test_data(10, n_periods=2, freq="yearly", seed=4, wide = True)
+det = Detect(dt2, id_nr="id_company", logger_level="debug")
+
+# %%
+test = det.quartile_error(x_var = ["employees_2020", "employees_2021"], y_var = ["turnover_2020", "turnover_2021"], strata_var = "nace")
+test
+
+# %%
 
 # %%
