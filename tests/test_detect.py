@@ -1,125 +1,18 @@
 # %%
 import logging
+import pytest
 
 from vaskify.createdata import create_test_data
 from vaskify.detect import Detect
 
-
 # %%
-def test_thousand_error() -> None:
-    dt = create_test_data(n=5, n_periods=2, freq="monthly", seed=42)
-    detection = Detect(dt, id_nr="id_company")
-    dt_controlled = detection.thousand_error(y_var="turnover", time_var="time_period")
-
-    assert any(dt_controlled.columns.isin(["flag_thousand"])), "Flag variable created"
-
-    outliers = detection.thousand_error(
-        y_var="turnover",
-        time_var="time_period",
-        output_format="outliers",
-    )
-    expected_shape = (0, 6)
-    assert (
-        outliers.shape == expected_shape
-    ), "output_format 'outlier' returns only outliers"
-
-
-# %%
-def test_accumulation_error() -> None:
-    dt = create_test_data(n=5, n_periods=2, freq="monthly", seed=42)
-    detect = Detect(dt, id_nr="id_company")
-    dt_controlled = detect.accumulation_error(y_var="turnover", time_var="time_period")
-
-    assert any(
-        dt_controlled.columns.isin(["flag_accumulation"]),
-    ), "Flag variable created"
-    expected_value = 1
-    assert (
-        dt_controlled.flag_accumulation.sum() == expected_value
-    ), "Potential errors flagged"
-
-
-# %%
-def test_hb() -> None:
-    dt = create_test_data(n=5, n_periods=2, freq="monthly", seed=42)
-    detect = Detect(dt, id_nr="id_company")
-    dt_controlled = detect.hb(y_var="turnover", time_var="time_period")
-
-    assert any(dt_controlled.columns.isin(["flag_hb"])), "Flag variable created"
-    expected_shape = 5
-    assert dt_controlled.shape[0] == expected_shape, "Wide format returned as default"
-
-    detect.change_logging_level("error")
-    dt_controlled = detect.hb(
-        y_var="turnover",
-        time_var="time_period",
-        output_format="outliers",
-    )
-    expected_shape = 0
-    assert dt_controlled.shape[0] == expected_shape, "Oulier format returned"
-
-    dt_controlled = detect.hb(
-        y_var="turnover",
-        time_var="time_period",
-        output_format="long",
-    )
-    expected_shape = 10
-    assert dt_controlled.shape[0] == expected_shape, "Long format returned"
-
-
-def test_hb_year() -> None:
-    dt = create_test_data(n=5, n_periods=2, freq="yearly", seed=42)
-    detect = Detect(dt, id_nr="id_company")
-    dt_controlled = detect.hb(y_var="turnover", time_var="time_period")
-
-    assert any(dt_controlled.columns.isin(["flag_hb"])), "Flag variable created"
-    expected_shape = 5, 7
-    assert dt_controlled.shape == expected_shape, "Wide format returned as default"
-
-
-def test_hb_strata() -> None:
-    dt = create_test_data(n=50, seed=10)
-    dt2 = dt.loc[dt.time_period.isin(["2020-04", "2020-05"]), :]
-
-    detect = Detect(dt2, id_nr="id_company")
-    dt_controlled = detect.hb(
-        y_var="turnover",
-        time_var="time_period",
-        strata_var="nace",
-    )
-
-    assert any(dt_controlled.columns.isin(["flag_hb"])), "Flag variable created"
-    expected_shape = 50
-    assert dt_controlled.shape[0] == expected_shape, "Wide format returned as default"
-
-    dt_controlled = detect.hb(
-        y_var="turnover",
-        strata_var="nace",
-        time_var="time_period",
-        output_format="outliers",
-    )
-    expected_shape = 2
-    assert dt_controlled.shape[0] == expected_shape, "Oulier format returned"
-
-    dt_controlled = detect.hb(
-        y_var="turnover",
-        time_var="time_period",
-        output_format="long",
-    )
-    expected_shape = 100
-    assert dt_controlled.shape[0] == expected_shape, "Long format returned"
-
-
-# %%
-def test_logger() -> None:
-    dt = create_test_data(n=5, n_periods=2, freq="monthly", seed=42)
-    detect = Detect(dt, id_nr="id_company")
+def test_logger(detector_wide) -> None:
     logger = logging.getLogger("detect")
     logger_level_observed = logger.getEffectiveLevel()
     logger_level_expected = 30  # "warning"
     assert logger_level_observed == logger_level_expected, "Logger level set correctly"
 
-    detect.change_logging_level("info")
+    detector_wide.change_logging_level("info")
     logger_level_observed = logger.getEffectiveLevel()
     logger_level_expected = 20  # "info"
     assert (
@@ -139,3 +32,15 @@ def test_no_impute(caplog) -> None:  # type: ignore[no-untyped-def]
 
     # Check that the message was logged
     assert "Imputation not implemented for this method." in caplog.text
+
+# %%
+def test_accumulation_error(detector_long) -> None:
+    dt_controlled = detector_long.accumulation_error(y_var="turnover", time_var="time_period")
+
+    assert any(
+        dt_controlled.columns.isin(["flag_accumulation"]),
+    ), "Flag variable created"
+    expected_value = 1
+    assert (
+        dt_controlled.flag_accumulation.sum() == expected_value
+    ), "Potential errors flagged"
