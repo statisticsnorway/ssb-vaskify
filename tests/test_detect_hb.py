@@ -38,7 +38,7 @@ def test_hb_outliers(detector_long) -> None:
     dt_controlled = detector_long.hb(
         y_var="turnover",
         time_var="time_period",
-        output_format="outliers",
+        output_scope="outliers",
     )
     expected_shape = 0
     assert dt_controlled.shape[0] == expected_shape, "Oulier format returned"
@@ -92,7 +92,7 @@ def test_hb_strata_outliers() -> None:
         y_var="turnover",
         strata_var="nace",
         time_var="time_period",
-        output_format="outliers",
+        output_scope="outliers",
     )
     expected_shape = 2
     assert dt_controlled.shape[0] == expected_shape, "Oulier format returned"
