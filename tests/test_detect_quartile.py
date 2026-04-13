@@ -20,7 +20,7 @@ def test_quartile_error_basic_ratio(detector_wide: Detect) -> None:
     assert res["ratio"].dtype.kind == "f"
 
     # Ratio should not be constant
-    assert res["ratio"].nunique() > 1 # noqa: PD101
+    assert res["ratio"].nunique() > 1  # noqa: PD101
 
     # Quartile bounds should exist
     assert "lower_limit" in res.columns
