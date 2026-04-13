@@ -15,15 +15,15 @@
 
 # %% [markdown]
 # ## Unittests for Thousand error detection
-
+from vaskify.detect import Detect
 
 # %%
-def test_thousand_error(detector_long) -> None:
+def test_thousand_error(detector_long: Detect) -> None:
 
     dt_controlled = detector_long.thousand_error(y_var="turnover", time_var="time_period")
     assert any(dt_controlled.columns.isin(["flag_thousand"])), "Flag variable created"
 
-def test_thousand_error_outliers(detector_long) -> None:
+def test_thousand_error_outliers(detector_long: Detect) -> None:
     outliers = detector_long.thousand_error(
         y_var="turnover",
         time_var="time_period",
@@ -37,7 +37,7 @@ def test_thousand_error_outliers(detector_long) -> None:
 
 
 # %%
-def test_thousand_error_wide(detector_wide) -> None:
+def test_thousand_error_wide(detector_wide: Detect) -> None:
     dt_controlled = detector_wide.thousand_error(y_var=["turnover_2020", "turnover_2021"])
 
     expected_shape = (5, 7)

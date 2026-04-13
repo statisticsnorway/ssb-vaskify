@@ -25,7 +25,7 @@ from vaskify.detect import Detect
 
 
 # %%
-def test_hb(detector_long) -> None:
+def test_hb(detector_long: Detect) -> None:
     dt_controlled = detector_long.hb(y_var="turnover", time_var="time_period")
 
     assert any(dt_controlled.columns.isin(["flag_hb"])), "Flag variable created"
@@ -34,7 +34,7 @@ def test_hb(detector_long) -> None:
 
     detector_long.change_logging_level("error")
 
-def test_hb_outliers(detector_long) -> None:
+def test_hb_outliers(detector_long: Detect) -> None:
     dt_controlled = detector_long.hb(
         y_var="turnover",
         time_var="time_period",
@@ -43,7 +43,7 @@ def test_hb_outliers(detector_long) -> None:
     expected_shape = 0
     assert dt_controlled.shape[0] == expected_shape, "Oulier format returned"
 
-def test_hb_output(detector_long) -> None:
+def test_hb_output(detector_long: Detect) -> None:
     dt_controlled = detector_long.hb(
         y_var="turnover",
         time_var="time_period",
@@ -52,19 +52,19 @@ def test_hb_output(detector_long) -> None:
     expected_shape = 10
     assert dt_controlled.shape[0] == expected_shape, "Long format returned"
 
-def test_hb_wide(detector_long) -> None:
+def test_hb_long_input_wide_output(detector_long: Detect) -> None:
     dt_controlled = detector_long.hb(y_var="turnover", time_var="time_period", output_format = "wide")
 
     expected_shape = 5, 11
     assert dt_controlled.shape == expected_shape, "Wide format returned as default"
 
-def test_hb_wide(detector_wide) -> None:
+def test_hb_wide_output(detector_wide: Detect) -> None:
     dt_controlled = detector_wide.hb(y_var=["turnover_2020", "turnover_2021"], output_format = "wide")
 
     expected_shape = 5, 11
     assert dt_controlled.shape == expected_shape, "Wide format returned as default"
 
-def test_hb_flag(detector_long) -> None:
+def test_hb_flag(detector_long: Detect) -> None:
     dt_controlled = detector_long.hb(y_var="turnover", time_var = "time_period", flag = "outlier_indicator")
     assert any(dt_controlled.columns.isin(["outlier_indicator"])), "Flag variable created"
 

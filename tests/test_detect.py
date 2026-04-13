@@ -6,7 +6,7 @@ from vaskify.createdata import create_test_data
 from vaskify.detect import Detect
 
 # %%
-def test_logger(detector_wide) -> None:
+def test_logger(detector_wide: Detect) -> None:
     logger = logging.getLogger("detect")
     logger_level_observed = logger.getEffectiveLevel()
     logger_level_expected = 30  # "warning"
@@ -34,7 +34,7 @@ def test_no_impute(caplog) -> None:  # type: ignore[no-untyped-def]
     assert "Imputation not implemented for this method." in caplog.text
 
 # %%
-def test_accumulation_error(detector_long) -> None:
+def test_accumulation_error(detector_long: Detect) -> None:
     dt_controlled = detector_long.accumulation_error(y_var="turnover", time_var="time_period")
 
     assert any(
