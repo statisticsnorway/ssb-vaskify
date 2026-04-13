@@ -336,7 +336,7 @@ class Detect:
         for flag_col, imp_col in zip(flag_names, impute_vars, strict=False):
 
             # Get log diff and drop first col
-            log10_diff = np.log10(data[y_vars]).diff(axis=1).iloc[:, 1:] # type: ignore [attr-defined]
+            log10_diff = np.log10(data[y_vars]).diff(axis=1).iloc[:, 1:]  # type: ignore [attr-defined]
 
             for col in y_vars[1:]:
                 period_suffix = col.split("_", 1)[1]
@@ -453,7 +453,7 @@ class Detect:
             output: pd.DataFrame = data
         elif output_format == "outliers":
             flagged_ids = data.groupby(self.id_nr, group_keys=False)[flag].apply(
-                lambda x: ((x == 1) | x.isna()).all(), # type: ignore[misc,arg-type]
+                lambda x: ((x == 1) | x.isna()).all(),  # type: ignore[misc,arg-type]
                 include_groups=False,
             )
             mes = f"Number of units identified with possible accumulation errors: {flagged_ids[flag].sum()}"
@@ -569,8 +569,8 @@ class Detect:
             output_format = "wide"
 
         if wide:
-            data = self._hb_wide( # type: ignore[arg-type]
-                y_var, 
+            data = self._hb_wide(
+                y_var,
                 strata_var,
                 pu,
                 pa,
@@ -578,10 +578,10 @@ class Detect:
                 percentiles,
                 flag,
                 output_format,
-            )
+            )  # type: ignore[arg-type]
         else:
-            data = self._hb_long( # type: ignore[arg-type]
-                y_var, 
+            data = self._hb_long(
+                y_var,
                 time_var,
                 time_periods,
                 strata_var,
@@ -591,7 +591,7 @@ class Detect:
                 percentiles,
                 flag,
                 output_format,
-            )
+            )  # type: ignore[arg-type]
 
         # Apply output format
         if output_scope == "outliers":
@@ -734,7 +734,7 @@ class Detect:
             self.logger.error("No valid rows with y_var > 0 for both time periods.")
 
         if strata_var:
-            limits = valid_rows.groupby( #type: ignore[call-overload]
+            limits = valid_rows.groupby(
                 strata_var,
                 group_keys=False,
             ).apply(
@@ -747,7 +747,7 @@ class Detect:
                     percentiles,
                 ),
                 include_groups=False,
-            )
+            )  # type: ignore[call-overload]
         else:
             limits = self._calculate_hb(
                 valid_rows[time1],
@@ -839,10 +839,10 @@ class Detect:
 
         # Check if multiple time periods used in wide format
         if isinstance(x_var, list) and isinstance(y_var, list):
-            var_list: list[str] = x_var + y_var # type: ignore[list-item]
+            var_list: list[str] = x_var + y_var
             two_ratios = True
         else:
-            var_list = [x_var, y_var] # type: ignore[list-item]
+            var_list = [x_var, y_var]  # type: ignore[list-item]
             two_ratios = False
 
         # Check for valid observations (not na and > 0)
