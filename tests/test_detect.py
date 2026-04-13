@@ -37,7 +37,8 @@ def test_no_impute(caplog) -> None:  # type: ignore[no-untyped-def]
 # %%
 def test_accumulation_error(detector_long: Detect) -> None:
     dt_controlled = detector_long.accumulation_error(
-        y_var="turnover", time_var="time_period"
+        y_var="turnover",
+        time_var="time_period",
     )
 
     assert any(

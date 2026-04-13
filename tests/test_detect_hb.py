@@ -1,18 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: py:percent
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.19.1
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
-
 # %% [markdown]
 # ## Unittests for HB method
 
@@ -55,7 +40,9 @@ def test_hb_output(detector_long: Detect) -> None:
 
 def test_hb_long_input_wide_output(detector_long: Detect) -> None:
     dt_controlled = detector_long.hb(
-        y_var="turnover", time_var="time_period", output_format="wide"
+        y_var="turnover",
+        time_var="time_period",
+        output_format="wide",
     )
 
     expected_shape = 5, 11
@@ -64,7 +51,8 @@ def test_hb_long_input_wide_output(detector_long: Detect) -> None:
 
 def test_hb_wide_output(detector_wide: Detect) -> None:
     dt_controlled = detector_wide.hb(
-        y_var=["turnover_2020", "turnover_2021"], output_format="wide"
+        y_var=["turnover_2020", "turnover_2021"],
+        output_format="wide",
     )
 
     expected_shape = 5, 11
@@ -73,10 +61,12 @@ def test_hb_wide_output(detector_wide: Detect) -> None:
 
 def test_hb_flag(detector_long: Detect) -> None:
     dt_controlled = detector_long.hb(
-        y_var="turnover", time_var="time_period", flag="outlier_indicator"
+        y_var="turnover",
+        time_var="time_period",
+        flag="outlier_indicator",
     )
     assert any(
-        dt_controlled.columns.isin(["outlier_indicator"])
+        dt_controlled.columns.isin(["outlier_indicator"]),
     ), "Flag variable created"
 
 

@@ -1,19 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: py:percent
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.19.1
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
-
-# %%
 # Fixtures
 import pandas as pd
 import pytest
@@ -45,11 +29,9 @@ def long_data() -> pd.DataFrame:
 
 @pytest.fixture
 def detector_wide(wide_data: pd.DataFrame) -> Detect:
-    det = Detect(wide_data, id_nr="id_company")
-    return det
+    return Detect(wide_data, id_nr="id_company")
 
 
 @pytest.fixture
 def detector_long(long_data: pd.DataFrame) -> Detect:
-    det = Detect(long_data, id_nr="id_company")
-    return det
+    return Detect(long_data, id_nr="id_company")
