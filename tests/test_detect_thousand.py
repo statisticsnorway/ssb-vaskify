@@ -17,18 +17,22 @@
 # ## Unittests for Thousand error detection
 from vaskify.detect import Detect
 
+
 # %%
 def test_thousand_error(detector_long: Detect) -> None:
 
-    dt_controlled = detector_long.thousand_error(y_var="turnover", time_var="time_period")
+    dt_controlled = detector_long.thousand_error(
+        y_var="turnover", time_var="time_period"
+    )
     assert any(dt_controlled.columns.isin(["flag_thousand"])), "Flag variable created"
+
 
 def test_thousand_error_outliers(detector_long: Detect) -> None:
     outliers = detector_long.thousand_error(
         y_var="turnover",
         time_var="time_period",
         output_format="long",
-        output_scope = "outliers"
+        output_scope="outliers",
     )
     expected_shape = (0, 6)
     assert (
@@ -38,7 +42,9 @@ def test_thousand_error_outliers(detector_long: Detect) -> None:
 
 # %%
 def test_thousand_error_wide(detector_wide: Detect) -> None:
-    dt_controlled = detector_wide.thousand_error(y_var=["turnover_2020", "turnover_2021"])
+    dt_controlled = detector_wide.thousand_error(
+        y_var=["turnover_2020", "turnover_2021"]
+    )
 
     expected_shape = (5, 7)
     assert dt_controlled.shape == expected_shape, "Wide format correct dimensions"

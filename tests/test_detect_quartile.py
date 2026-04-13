@@ -19,10 +19,10 @@
 # %%
 import pandas as pd
 
-from vaskify.createdata import create_test_data
 from vaskify.detect import Detect
 
 # Do not import fixtures!
+
 
 # %%
 def test_quartile_error_basic_ratio(detector_wide: Detect) -> None:
@@ -40,6 +40,7 @@ def test_quartile_error_basic_ratio(detector_wide: Detect) -> None:
     # Quartile bounds should exist
     assert "lower_limit" in res.columns
     assert "upper_limit" in res.columns
+
 
 # %%
 def test_quartile_error_y_var_none(detector_wide: Detect) -> None:
@@ -65,7 +66,8 @@ def test_quartile_error_multiple_ratios(detector_wide: Detect) -> None:
 
 def test_quartile_error_filters_invalid_rows(detector_wide: Detect) -> None:
     detector_wide.data.loc[
-        detector_wide.data.index[0], "employees_2020"
+        detector_wide.data.index[0],
+        "employees_2020",
     ] = -1
 
     result = detector_wide.quartile_error(

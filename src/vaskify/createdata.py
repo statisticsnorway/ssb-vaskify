@@ -87,10 +87,14 @@ def _to_wide(data: pd.DataFrame) -> pd.DataFrame:
             separate columns for each metric/period combination,
             prefixed with 'employees_' and 'turnover_' respectively.
     """
-    employees_wide = data.pivot(index="id_company", columns="time_period", values="employees")
+    employees_wide = data.pivot(
+        index="id_company", columns="time_period", values="employees"
+    )
     employees_wide.columns = [f"employees_{col}" for col in employees_wide.columns]
 
-    turnover_wide = data.pivot(index="id_company", columns="time_period", values="turnover")
+    turnover_wide = data.pivot(
+        index="id_company", columns="time_period", values="turnover"
+    )
     turnover_wide.columns = [f"turnover_{col}" for col in turnover_wide.columns]
 
     static = data[["id_company", "nace"]].drop_duplicates().set_index("id_company")
