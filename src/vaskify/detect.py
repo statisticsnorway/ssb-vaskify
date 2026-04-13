@@ -193,7 +193,7 @@ class Detect:
 
         if output_format == "long" and wide:
             self.logger.warning(
-                "Only wide output format is curently available for data which is inputed as wide format."
+                "Only wide output format is curently available for data which is inputed as wide format.",
             )
             output_format = "wide"
 
@@ -204,7 +204,7 @@ class Detect:
         # Resolve impute_var names: one per y_var
         if wide:
             impute_vars = [
-                impute_var if impute_var else y_vars[0].split("_")[0] + "_imputed"
+                impute_var if impute_var else y_vars[0].split("_")[0] + "_imputed",
             ]
         else:
             impute_vars = [impute_var if impute_var else f"{y_var}_imputed"]
@@ -240,7 +240,9 @@ class Detect:
         # Apply output scope
         if output_scope == "outliers":
             mask_outlier_units = self._identify_outliers(
-                data, flag_names, output_format
+                data,
+                flag_names,
+                output_format,
             )
             data = data.loc[mask_outlier_units, :]
 
@@ -250,7 +252,10 @@ class Detect:
         return data
 
     def _identify_outliers(
-        self, dt: pd.DataFrame, flag_names: list[str], output_format: str
+        self,
+        dt: pd.DataFrame,
+        flag_names: list[str],
+        output_format: str,
     ) -> Any:
         if output_format == "wide":
             flag_cols = [c for c in dt.columns if flag_names[0] in c]
@@ -262,14 +267,17 @@ class Detect:
         return outlier_mask
 
     def _long_to_wide(
-        self, df: pd.DataFrame, id_nr: str, time_var: str | None
+        self,
+        df: pd.DataFrame,
+        id_nr: str,
+        time_var: str | None,
     ) -> pd.DataFrame:
         """Convert a data frame from long to wide format."""
         if time_var is None:
             self.logger.error(msg="Time variable can't be missing when in long format")
 
         # Alle kolonner som ikke er id eller time
-        other_vars = [c for c in df.columns if c not in [id_nr] + [time_var]]
+        other_vars = [c for c in df.columns if c not in [id_nr, time_var]]
 
         # Split into time-varying vs constant columns
         varying_vars = [
@@ -288,20 +296,21 @@ class Detect:
         if isinstance(df_wide.columns, pd.MultiIndex):
             cols = df_wide.columns.to_flat_index()
         else:
-            raise AssertionError("Expected MultiIndex columns after pivot_table")
+            msg = "Expected MultiIndex columns after pivot_table"
+            raise TypeError(msg)
 
         df_wide.columns = [f"{val}_{tid}" for val, tid in cols]
         df_wide = df_wide.reset_index()
 
         # Merge in the constant columns (one row per id)
         if constant_vars:
-            df_const = df[[id_nr] + constant_vars].drop_duplicates(subset=id_nr)
+            df_const = df[[id_nr, *constant_vars]].drop_duplicates(subset=id_nr)
             df_wide = df_wide.merge(df_const, on=id_nr, how="left")
 
             col_order = (
                 [id_nr]
                 + constant_vars
-                + [c for c in df_wide.columns if c not in [id_nr] + constant_vars]
+                + [c for c in df_wide.columns if c not in [[id_nr, *constant_vars]]]
             )
             df_wide = df_wide[col_order]
 
@@ -319,11 +328,15 @@ class Detect:
     ) -> pd.DataFrame:
         """Wide-format implementation of thousand error detection. Output_format not implemented yet."""
         data = self.data.copy()
+        if output_format == "long":
+            output_format = "wide"
+            msg = "long format not implemented. Returning wide format"
+            self.logger.warning(msg)
 
         for flag_col, imp_col in zip(flag_names, impute_vars, strict=False):
 
             # Get log diff and drop first col
-            log10_diff = np.log10(data[y_vars]).diff(axis=1).iloc[:, 1:]  # type: ignore
+            log10_diff = np.log10(data[y_vars]).diff(axis=1).iloc[:, 1:]
 
             for col in y_vars[1:]:
                 period_suffix = col.split("_", 1)[1]
@@ -362,7 +375,7 @@ class Detect:
             self.logger.error(msg="Time variable missing in long format")
         else:
             data = self.data.sort_values(by=[self.id_nr, time_var]).reset_index(
-                drop=True
+                drop=True,
             )
 
         for v, flag_col, imp_col in zip(y_vars, flag_names, impute_vars, strict=False):
@@ -440,7 +453,7 @@ class Detect:
             output: pd.DataFrame = data
         elif output_format == "outliers":
             flagged_ids = data.groupby(self.id_nr, group_keys=False)[flag].apply(
-                lambda x: ((x == 1) | x.isna()).all(),  # type: ignore
+                lambda x: ((x == 1) | x.isna()).all(),
                 include_groups=False,
             )
             mes = f"Number of units identified with possible accumulation errors: {flagged_ids[flag].sum()}"
@@ -487,15 +500,14 @@ class Detect:
         lower_limit = med_ratio * max_y**pu / (max_y**pu - ell)
         upper_limit = med_ratio * (max_y**pu + eul) / max_y**pu
 
-        output_dt = pd.DataFrame(
+        return pd.DataFrame(
             {
                 "lower_limit": lower_limit,
                 "upper_limit": upper_limit,
                 "ratio": rat,
                 "median_ratio": med_ratio,
-            }
+            },
         )
-        return output_dt
 
     def _fix_output_format(self, output_format: str, wide: bool) -> str:
 
@@ -552,12 +564,11 @@ class Detect:
 
         if output_format == "long" and wide:
             self.logger.warning(
-                "Only wide output format is curently available for data which is inputed as wide format."
+                "Only wide output format is curently available for data which is inputed as wide format.",
             )
             output_format = "wide"
 
         if wide:
-            assert isinstance(y_var, list)  # to please mypy
             data = self._hb_wide(
                 y_var,
                 strata_var,
@@ -569,8 +580,6 @@ class Detect:
                 output_format,
             )
         else:
-            assert isinstance(y_var, str)  # to please mypy
-            assert isinstance(time_var, str)  # to please mypy
             data = self._hb_long(
                 y_var,
                 time_var,
@@ -587,7 +596,9 @@ class Detect:
         # Apply output format
         if output_scope == "outliers":
             mask_outlier_units = self._identify_outliers(
-                dt=data, flag_names=[flag], output_format=output_format
+                dt=data,
+                flag_names=[flag],
+                output_format=output_format,
             )
             data = data.loc[mask_outlier_units, :]
             if data.shape[0] == 0:
@@ -654,13 +665,14 @@ class Detect:
             )
             mask = output[time_var] == time0
             output.loc[
-                mask, ["ratio", "median_ratio", "lower_limit", "upper_limit", flag]
+                mask,
+                ["ratio", "median_ratio", "lower_limit", "upper_limit", flag],
             ] = np.nan
 
             # Extract time variable back
             time_pattern = "|".join(time_levels)
             output[time_var] = output[time_var].str.extract(f"({time_pattern})")
-            output = pd.merge(data, output, how="left")
+            output = data.merge(output, how="left")
         else:
             output = result
 
@@ -677,12 +689,16 @@ class Detect:
         flag: str,
         output_format: str,
     ) -> pd.DataFrame:
-        """Wide-format implementation of the HB method. Output not implemented yet"""
+        """Wide-format implementation of the HB method. Output not implemented yet."""
         if len(y_var) != 2:
             self.logger.error(
-                "y_var must contain exactly two column names in wide format."
+                "y_var must contain exactly two column names in wide format.",
             )
         time0, time1 = y_var[0], y_var[1]
+
+        if output_format == "long":
+            msg = "Output format for long format not implemented yet"
+            self.logger.error(msg)
 
         for v in y_var:
             self._check_data(self.data, y_var=v, time_var="")
@@ -719,8 +735,9 @@ class Detect:
 
         if strata_var:
             limits = valid_rows.groupby(
-                strata_var, group_keys=False
-            ).apply(  # type: ignore
+                strata_var,
+                group_keys=False,
+            ).apply(
                 lambda group: self._calculate_hb(
                     group[time1],
                     group[time0],
@@ -742,7 +759,10 @@ class Detect:
             )
 
         valid_rows = valid_rows.merge(
-            limits, left_index=True, right_index=True, how="left"
+            limits,
+            left_index=True,
+            right_index=True,
+            how="left",
         )
 
         valid_rows[flag] = np.where(
@@ -779,59 +799,32 @@ class Detect:
         multiple ratios (lists of variables), where lower and upper bounds are
         computed using specified percentiles and scaling parameters.
 
-        Parameters
-        ----------
-        x_var : str or list of str
-            Name(s) of numerator variable(s). If a list is provided, `y_var`
-            must also be a list of the same length.
-        y_var : str or list of str or None, optional
-            Name(s) of denominator variable(s). If `None`, a temporary constant
-            denominator is used. Default is None.
-        time_var : str or None, optional
-            Name of a time variable. Currently not supported; only wide-format
-            input is implemented. If provided, an error is logged. Default is None.
-        time_periods : list of str or None, optional
-            Reserved for future use. Currently not applied.
-        strata_var : str, optional
-            Optional variable defining strata within which quartiles are calculated.
-            Default is an empty string (no stratification).
-        pkl : float, optional
-            Scaling factor applied to the lower quartile limit. Default is 3.
-        pku : float, optional
-            Scaling factor applied to the upper quartile limit. Default is 3.
-        percentiles : tuple of float, optional
-            Lower and upper percentiles used to compute quartiles. Default is
-            (0.25, 0.75).
-        flag : str, optional
-            Name of the output flag variable indicating detected outliers.
-            Default is "flag_quartile".
-        output_format : str, optional
-            Reserved for future use. Currently not applied. Only wide format returned.
-        output_scope : {"all", "outliers"}, optional
-            Determines whether all observations are returned or only those flagged
-            as outliers. Default is "all".
+        Args:
+            x_var: str or list of str for the name(s) of numerator variable(s). If a list is provided, `y_var` must also be a list of the same length.
+            y_var : str or list of str or None for the name(s) of denominator variable(s). If `None`, a temporary constantdenominator is used. Default is None.
+            time_var : str or None for the name of a time variable. Currently not supported; only wide-format input is implemented. If provided, an error is logged. Default is None.
+            time_periods : list of str or None. Reserved for future use. Currently not applied.
+            strata_var : Optional str variable defining strata within which quartiles are calculated. Default is an empty string (no stratification).
+            pkl : Float scaling factor applied to the lower quartile limit. Default is 3.
+            pku : Float scaling factor applied to the upper quartile limit. Default is 3.
+            percentiles : tuple of floats for the lower and upper percentiles used to compute quartiles. Default is (0.25, 0.75).
+            flag : Str name of the output flag variable indicating detected outliers. Default is "flag_quartile".
+            output_format : str reserved for future use. Currently not applied. Only wide format returned.
+            output_scope : {"all", "outliers"} to determine whether all observations are returned or only those flagged as outliers. Default is "all".
 
         Returns:
-        -------
-        pandas.DataFrame
-            A DataFrame containing the original data along with calculated
-            quartile limits, ratios, and an indicator flag for quartile-based
-            outliers. If `output_scope="outliers"`, only flagged observations
-            are returned.
-
-        Notes:
-        -----
-        - Only wide-format input data is currently supported.
-        - The method assumes that `x_var` and `y_var` are either both strings or
-        both lists of strings when provided.
+            A pandas DataFrame containing the original data along with calculated quartile limits, ratios, and an indicator flag for quartile-based outliers. If `output_scope="outliers"`, only flagged observations are returned.
         """
         wide = time_var is None
         if not wide:
             self.logger.error(
-                "Only wide data input format is currently programmed. Please reformat data and do not use a time variable."
+                "Only wide data input format is currently programmed. Please reformat data and do not use a time variable.",
             )
 
         output_format = self._fix_output_format(output_format, wide)
+        if time_periods is not None:
+            msg = "time_periods parameter not implemented yet."
+            self.logger.error(msg)
 
         dt = self.data
 
@@ -849,8 +842,6 @@ class Detect:
             var_list: list[str] = x_var + y_var
             two_ratios = True
         else:
-            assert isinstance(x_var, str)  # to please mypy
-            assert isinstance(y_var, str)  # to please mypy
             var_list = [x_var, y_var]
             two_ratios = False
 
@@ -859,16 +850,27 @@ class Detect:
         dt = dt.loc[keep].copy()
 
         dt_quartiles = self._calculate_quartiles(
-            dt, strata_var, x_var, y_var, percentiles, pkl, pku, flag, two_ratios
+            dt,
+            strata_var,
+            x_var,
+            y_var,
+            percentiles,
+            pkl,
+            pku,
+            flag,
+            two_ratios,
         )
         dt_quartiles = dt_quartiles.drop(
-            columns=["y_var_temp", "y_var_temp2"], errors="ignore"
+            columns=["y_var_temp", "y_var_temp2"],
+            errors="ignore",
         )
 
         # Apply output scope
         if output_scope == "outliers":
             mask_outlier_units = self._identify_outliers(
-                dt_quartiles, flag_names=[flag], output_format="wide"
+                dt_quartiles,
+                flag_names=[flag],
+                output_format="wide",
             )  # only wide implemented
             dt_quartiles = dt_quartiles.loc[mask_outlier_units, :]
             if dt_quartiles.shape[0] == 0:
@@ -888,7 +890,7 @@ class Detect:
         flag: str,
         two_ratios: bool,
     ) -> pd.DataFrame:
-        """Internal function for calculating quartiles"""
+        """Internal function for calculating quartiles."""
         # Ratios
         if not two_ratios:
             dt["ratio"] = dt[x_var] / dt[y_var]
@@ -930,7 +932,7 @@ class Detect:
 
             if not two_ratios:
                 dt["ratio_strata"] = g[x_var].transform("sum") / g[y_var].transform(
-                    "sum"
+                    "sum",
                 )
             else:
                 dt["ratio_strata"] = g[x_var[0]].transform("sum") / g[
