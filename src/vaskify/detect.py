@@ -184,6 +184,7 @@ class Detect:
             self.logger.warning(
                 msg="output_format is not valid. Use 'infer', 'wide', 'long'. Returning 'wide' format.",
             )
+            output_format = "wide"
 
         if output_format == "infer":
             if not wide:

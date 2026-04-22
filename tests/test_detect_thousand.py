@@ -1,9 +1,9 @@
 # %% [markdown]
 # ## Unittests for Thousand error detection
 from vaskify.detect import Detect
+import pandas as pd
 
 
-# %%
 def test_thousand_error(detector_long: Detect) -> None:
 
     dt_controlled = detector_long.thousand_error(
@@ -26,7 +26,6 @@ def test_thousand_error_outliers(detector_long: Detect) -> None:
     ), "output_format 'outlier' returns only outliers"
 
 
-# %%
 def test_thousand_error_wide(detector_wide: Detect) -> None:
     dt_controlled = detector_wide.thousand_error(
         y_var=["turnover_2020", "turnover_2021"],
@@ -34,3 +33,52 @@ def test_thousand_error_wide(detector_wide: Detect) -> None:
 
     expected_shape = (5, 7)
     assert dt_controlled.shape == expected_shape, "Wide format correct dimensions"
+
+
+def test_thousand_error_flag_name_custom(detector_long: Detect) -> None:
+    result = detector_long.thousand_error(
+        y_var="turnover",
+        time_var="time_period",
+        flag="my_flag",
+    )
+    assert "my_flag" in result.columns
+
+
+def test_thousand_error_invalid_output_format_falls_back_to_wide(
+    detector_long: Detect,
+) -> None:
+    result = detector_long.thousand_error(
+        y_var="turnover",
+        time_var="time_period",
+        output_format="invalid",
+    )
+    assert "time_period" not in result.columns  # wide format has no time_period column
+
+
+def test_thousand_error_infer_returns_long_for_long_input(
+    detector_long: Detect,
+) -> None:
+    result = detector_long.thousand_error(
+        y_var="turnover",
+        time_var="time_period",
+        output_format="infer",
+    )
+    assert "time_period" in result.columns
+
+
+def test_thousand_error_infer_returns_wide_for_wide_input(
+    detector_wide: Detect,
+) -> None:
+    result = detector_wide.thousand_error(
+        y_var=["turnover_2020", "turnover_2021"],
+        output_format="infer",
+    )
+    assert "time_period" not in result.columns
+
+
+def test_thousand_error_returns_dataframe(detector_long: Detect) -> None:
+    result = detector_long.thousand_error(
+        y_var="turnover",
+        time_var="time_period",
+    )
+    assert isinstance(result, pd.DataFrame)
