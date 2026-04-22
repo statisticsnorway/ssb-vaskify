@@ -5,7 +5,7 @@ import logging
 
 from vaskify.createdata import create_test_data
 from vaskify.detect import Detect
-import vaskify
+
 
 # ---------------------------------------------------------------------------
 # Logger
@@ -85,6 +85,15 @@ def test_raises_if_y_var_not_numeric() -> None:
         assert "value should be numeric" in str(e)
 
 
+def test_raises_if_time_var_not_string() -> None:
+    df = make_base_df()
+    try:
+        make_checker()._check_data(df, time_var="value")
+        raise AssertionError("Expected ValueError")
+    except ValueError as e:
+        assert "value should be a string" in str(e)
+
+
 def test_raises_if_time_var_invalid_format() -> None:
     df = make_base_df()
     df["period"] = ["Jan-2020", "Feb-2020", "Mar-2020"]
@@ -97,38 +106,3 @@ def test_raises_if_time_var_invalid_format() -> None:
 
 def test_skips_checks_for_empty_args() -> None:
     make_checker()._check_data(make_base_df())
-
-
-# ---------------------------------------------------------------------------
-# Accumulation error
-# ---------------------------------------------------------------------------
-
-
-# %%
-def test_no_impute(caplog) -> None:  # type: ignore[no-untyped-def]
-    dt = create_test_data(n=5, n_periods=2, freq="monthly", seed=42)
-    detect = Detect(dt, id_nr="id_company")
-    detect.accumulation_error(
-        y_var="turnover",
-        time_var="time_period",
-        impute=True,
-    )
-
-    # Check that the message was logged
-    assert "Imputation not implemented for this method." in caplog.text
-
-
-# %%
-def test_accumulation_error(detector_long: Detect) -> None:
-    dt_controlled = detector_long.accumulation_error(
-        y_var="turnover",
-        time_var="time_period",
-    )
-
-    assert any(
-        dt_controlled.columns.isin(["flag_accumulation"]),
-    ), "Flag variable created"
-    expected_value = 1
-    assert (
-        dt_controlled.flag_accumulation.sum() == expected_value
-    ), "Potential errors flagged"

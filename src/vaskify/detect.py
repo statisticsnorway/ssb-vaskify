@@ -282,7 +282,9 @@ class Detect:
 
         # Split into time-varying vs constant columns
         varying_vars = [
-            c for c in other_vars if df.groupby(id_nr)[c].nunique().gt(1).any()
+            c
+            for c in other_vars
+            if df.groupby(id_nr)[c].nunique(dropna=False).gt(1).any()
         ]
         constant_vars = [c for c in other_vars if c not in varying_vars]
 
@@ -330,22 +332,23 @@ class Detect:
         """Wide-format implementation of thousand error detection. Output_format not implemented yet."""
         data = self.data.copy()
         if output_format == "long":
-            output_format = "wide"
             msg = "long format not implemented. Returning wide format"
             self.logger.warning(msg)
+            output_format = "wide"
+
+        # Get log diff and drop first col
+        log10_diff = np.log10(data[y_vars]).diff(axis=1).iloc[:, 1:]  # type: ignore [attr-defined] ###
 
         for flag_col, imp_col in zip(flag_names, impute_vars, strict=False):
-
-            # Get log diff and drop first col
-            log10_diff = np.log10(data[y_vars]).diff(axis=1).iloc[:, 1:]  # type: ignore [attr-defined]
 
             for col in y_vars[1:]:
                 period_suffix = col.split("_", 1)[1]
                 period_flag = f"{flag_col}_{period_suffix}"
                 mask_na = log10_diff[col].isna()
-                mask_outlier = (log10_diff[col] > upper_bound) | (
-                    log10_diff[col] < lower_bound
-                )
+                mask_outlier = (
+                    (log10_diff[col] > upper_bound)
+                    | (log10_diff[col] < lower_bound)  ##
+                ) & ~mask_na
 
                 data[period_flag] = 0
                 data.loc[mask_na, period_flag] = np.nan
@@ -381,11 +384,13 @@ class Detect:
 
         for v, flag_col, imp_col in zip(y_vars, flag_names, impute_vars, strict=False):
             log10_diff = data.groupby(self.id_nr)[v].transform(
-                lambda x: np.log10(x).diff(),
+                lambda x: np.log10(x / x.shift(1)),  # ratio first, then log
             )
 
             mask_na = log10_diff.isna()
-            mask_outlier = (log10_diff > upper_bound) | (log10_diff < lower_bound)
+            mask_outlier = (
+                (log10_diff > upper_bound) | (log10_diff < lower_bound)
+            ) & ~mask_na  # exclude NaN rows explicitly
 
             data[flag_col] = 0
             data.loc[mask_na, flag_col] = np.nan
@@ -397,6 +402,11 @@ class Detect:
 
         if output_format == "wide":
             data = self._long_to_wide(data, self.id_nr, time_var)
+            first_period = self.data[time_var].min()
+            cols_to_drop = [f"{flag_col}_{first_period}" for flag_col in flag_names] + [
+                f"{imp_col}_{first_period}" for imp_col in impute_vars
+            ]
+            data = data.drop(columns=cols_to_drop, errors="ignore")
 
         return data
 
@@ -457,10 +467,10 @@ class Detect:
                 lambda x: ((x == 1) | x.isna()).all(),  # type: ignore[misc,arg-type]
                 include_groups=False,
             )
-            mes = f"Number of units identified with possible accumulation errors: {flagged_ids[flag].sum()}"
+            mes = f"Number of units identified with possible accumulation errors: {flagged_ids.sum()}"
             self.logger.info(mes)
-            ids_with_flag_all_periods = flagged_ids[flagged_ids[flag]][self.id_nr]
-            mask_units = data[self.id_nr].isin(ids_with_flag_all_periods)
+            ids_with_flag_some_periods = flagged_ids.index[flagged_ids]
+            mask_units = data[self.id_nr].isin(ids_with_flag_some_periods)
             output = data.loc[mask_units, :]
         else:
             self.logger.warning("output_format is not valid. Use 'data' or 'outliers'")
