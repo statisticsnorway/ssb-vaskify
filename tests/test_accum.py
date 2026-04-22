@@ -36,6 +36,7 @@ def test_accumulation_error(detector_long: Detect) -> None:
         dt_controlled.flag_accumulation.sum() == expected_value
     ), "Potential errors flagged"
 
+
 def test_accumulation_error_flag_column_created(detector_long):
     result = detector_long.accumulation_error(y_var="turnover", time_var="time_period")
     assert "flag_accumulation" in result.columns
