@@ -569,8 +569,16 @@ class Detect:
             output_format = "wide"
 
         if wide:
+            # Check at y_var is a list
+            if isinstance(y_var, str):
+                self.logger.error(
+                    "y_var must contain a list with two column names for wide format.",
+                )
+            else:
+                y_var_list: list[str] = y_var
+
             data = self._hb_wide(
-                y_var,
+                y_var_list,
                 strata_var,
                 pu,
                 pa,
@@ -578,11 +586,25 @@ class Detect:
                 percentiles,
                 flag,
                 output_format,
-            )  # type: ignore[arg-type]
+            )
         else:
+            if isinstance(y_var, list):
+                self.logger.error(
+                    "y_var must contain a string with column name for long format.",
+                )
+            else:
+                y_var_str = y_var
+
+            # Not able to come to this loop but need it for mypy
+            if time_var is None:
+                self.logger.error(
+                    "time_var can't be None in long format.",
+                )
+            else:
+                time_var_str = time_var
             data = self._hb_long(
-                y_var,
-                time_var,
+                y_var_str,
+                time_var_str,
                 time_periods,
                 strata_var,
                 pu,
@@ -591,7 +613,7 @@ class Detect:
                 percentiles,
                 flag,
                 output_format,
-            )  # type: ignore[arg-type]
+            )
 
         # Apply output format
         if output_scope == "outliers":
@@ -801,16 +823,16 @@ class Detect:
 
         Args:
             x_var: str or list of str for the name(s) of numerator variable(s). If a list is provided, `y_var` must also be a list of the same length.
-            y_var : str or list of str or None for the name(s) of denominator variable(s). If `None`, a temporary constantdenominator is used. Default is None.
-            time_var : str or None for the name of a time variable. Currently not supported; only wide-format input is implemented. If provided, an error is logged. Default is None.
-            time_periods : list of str or None. Reserved for future use. Currently not applied.
-            strata_var : Optional str variable defining strata within which quartiles are calculated. Default is an empty string (no stratification).
-            pkl : Float scaling factor applied to the lower quartile limit. Default is 3.
-            pku : Float scaling factor applied to the upper quartile limit. Default is 3.
-            percentiles : tuple of floats for the lower and upper percentiles used to compute quartiles. Default is (0.25, 0.75).
-            flag : Str name of the output flag variable indicating detected outliers. Default is "flag_quartile".
-            output_format : str reserved for future use. Currently not applied. Only wide format returned.
-            output_scope : {"all", "outliers"} to determine whether all observations are returned or only those flagged as outliers. Default is "all".
+            y_var: str or list of str or None for the name(s) of denominator variable(s). If `None`, a temporary constantdenominator is used. Default is None.
+            time_var: str or None for the name of a time variable. Currently not supported; only wide-format input is implemented. If provided, an error is logged. Default is None.
+            time_periods: list of str or None. Reserved for future use. Currently not applied.
+            strata_var: Optional str variable defining strata within which quartiles are calculated. Default is an empty string (no stratification).
+            pkl: Float scaling factor applied to the lower quartile limit. Default is 3.
+            pku: Float scaling factor applied to the upper quartile limit. Default is 3.
+            percentiles: tuple of floats for the lower and upper percentiles used to compute quartiles. Default is (0.25, 0.75).
+            flag: Str name of the output flag variable indicating detected outliers. Default is "flag_quartile".
+            output_format: str reserved for future use. Currently not applied. Only wide format returned.
+            output_scope: {"all", "outliers"} to determine whether all observations are returned or only those flagged as outliers. Default is "all".
 
         Returns:
             A pandas DataFrame containing the original data along with calculated quartile limits, ratios, and an indicator flag for quartile-based outliers. If `output_scope="outliers"`, only flagged observations are returned.
