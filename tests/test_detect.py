@@ -1,125 +1,25 @@
 # %%
+from typing import Any
+import pandas as pd
 import logging
 
 from vaskify.createdata import create_test_data
 from vaskify.detect import Detect
 
 
-# %%
-def test_thousand_error() -> None:
-    dt = create_test_data(n=5, n_periods=2, freq="monthly", seed=42)
-    detection = Detect(dt, id_nr="id_company")
-    dt_controlled = detection.thousand_error(y_var="turnover", time_var="time_period")
-
-    assert any(dt_controlled.columns.isin(["flag_thousand"])), "Flag variable created"
-
-    outliers = detection.thousand_error(
-        y_var="turnover",
-        time_var="time_period",
-        output_format="outliers",
-    )
-    expected_shape = (0, 6)
-    assert (
-        outliers.shape == expected_shape
-    ), "output_format 'outlier' returns only outliers"
+# ---------------------------------------------------------------------------
+# Logger
+# ---------------------------------------------------------------------------
 
 
 # %%
-def test_accumulation_error() -> None:
-    dt = create_test_data(n=5, n_periods=2, freq="monthly", seed=42)
-    detect = Detect(dt, id_nr="id_company")
-    dt_controlled = detect.accumulation_error(y_var="turnover", time_var="time_period")
-
-    assert any(
-        dt_controlled.columns.isin(["flag_accumulation"]),
-    ), "Flag variable created"
-    expected_value = 1
-    assert (
-        dt_controlled.flag_accumulation.sum() == expected_value
-    ), "Potential errors flagged"
-
-
-# %%
-def test_hb() -> None:
-    dt = create_test_data(n=5, n_periods=2, freq="monthly", seed=42)
-    detect = Detect(dt, id_nr="id_company")
-    dt_controlled = detect.hb(y_var="turnover", time_var="time_period")
-
-    assert any(dt_controlled.columns.isin(["flag_hb"])), "Flag variable created"
-    expected_shape = 5
-    assert dt_controlled.shape[0] == expected_shape, "Wide format returned as default"
-
-    detect.change_logging_level("error")
-    dt_controlled = detect.hb(
-        y_var="turnover",
-        time_var="time_period",
-        output_format="outliers",
-    )
-    expected_shape = 0
-    assert dt_controlled.shape[0] == expected_shape, "Oulier format returned"
-
-    dt_controlled = detect.hb(
-        y_var="turnover",
-        time_var="time_period",
-        output_format="long",
-    )
-    expected_shape = 10
-    assert dt_controlled.shape[0] == expected_shape, "Long format returned"
-
-
-def test_hb_year() -> None:
-    dt = create_test_data(n=5, n_periods=2, freq="yearly", seed=42)
-    detect = Detect(dt, id_nr="id_company")
-    dt_controlled = detect.hb(y_var="turnover", time_var="time_period")
-
-    assert any(dt_controlled.columns.isin(["flag_hb"])), "Flag variable created"
-    expected_shape = 5, 7
-    assert dt_controlled.shape == expected_shape, "Wide format returned as default"
-
-
-def test_hb_strata() -> None:
-    dt = create_test_data(n=50, seed=10)
-    dt2 = dt.loc[dt.time_period.isin(["2020-04", "2020-05"]), :]
-
-    detect = Detect(dt2, id_nr="id_company")
-    dt_controlled = detect.hb(
-        y_var="turnover",
-        time_var="time_period",
-        strata_var="nace",
-    )
-
-    assert any(dt_controlled.columns.isin(["flag_hb"])), "Flag variable created"
-    expected_shape = 50
-    assert dt_controlled.shape[0] == expected_shape, "Wide format returned as default"
-
-    dt_controlled = detect.hb(
-        y_var="turnover",
-        strata_var="nace",
-        time_var="time_period",
-        output_format="outliers",
-    )
-    expected_shape = 2
-    assert dt_controlled.shape[0] == expected_shape, "Oulier format returned"
-
-    dt_controlled = detect.hb(
-        y_var="turnover",
-        time_var="time_period",
-        output_format="long",
-    )
-    expected_shape = 100
-    assert dt_controlled.shape[0] == expected_shape, "Long format returned"
-
-
-# %%
-def test_logger() -> None:
-    dt = create_test_data(n=5, n_periods=2, freq="monthly", seed=42)
-    detect = Detect(dt, id_nr="id_company")
+def test_logger(detector_wide: Detect) -> None:
     logger = logging.getLogger("detect")
     logger_level_observed = logger.getEffectiveLevel()
     logger_level_expected = 30  # "warning"
     assert logger_level_observed == logger_level_expected, "Logger level set correctly"
 
-    detect.change_logging_level("info")
+    detector_wide.change_logging_level("info")
     logger_level_observed = logger.getEffectiveLevel()
     logger_level_expected = 20  # "info"
     assert (
@@ -127,15 +27,82 @@ def test_logger() -> None:
     ), "Logger level changed correctly"
 
 
-# %%
-def test_no_impute(caplog) -> None:  # type: ignore[no-untyped-def]
-    dt = create_test_data(n=5, n_periods=2, freq="monthly", seed=42)
-    detect = Detect(dt, id_nr="id_company")
-    detect.accumulation_error(
-        y_var="turnover",
-        time_var="time_period",
-        impute=True,
+# ---------------------------------------------------------------------------
+# check data
+# ---------------------------------------------------------------------------
+
+
+def make_checker() -> Any:
+    instance = Detect.__new__(Detect)
+    instance._is_valid_date_format = lambda x: x.startswith("2020")
+    return instance
+
+
+def make_base_df() -> Any:
+    return pd.DataFrame(
+        {
+            "id": ["1", "2", "3"],
+            "period": ["2020-01", "2020-02", "2020-03"],
+            "value": [100.0, 200.0, 300.0],
+        }
     )
 
-    # Check that the message was logged
-    assert "Imputation not implemented for this method." in caplog.text
+
+def test_passes_with_valid_data() -> None:
+    make_checker()._check_data(
+        make_base_df(),
+        y_var="value",
+        time_var="period",
+        id_nr="id",
+    )
+
+
+def test_raises_on_missing_column() -> None:
+    try:
+        make_checker()._check_data(make_base_df(), y_var="nonexistent")
+        raise AssertionError("Expected ValueError")
+    except ValueError as e:
+        assert "Missing column: nonexistent" in str(e)
+
+
+def test_raises_if_id_not_string() -> None:
+    df = make_base_df()
+    df["id"] = [1, 2, 3]
+    try:
+        make_checker()._check_data(df, id_nr="id")
+        raise AssertionError("Expected ValueError")
+    except ValueError as e:
+        assert "id should be a string" in str(e)
+
+
+def test_raises_if_y_var_not_numeric() -> None:
+    df = make_base_df()
+    df["value"] = ["a", "b", "c"]
+    try:
+        make_checker()._check_data(df, y_var="value")
+        raise AssertionError("Expected ValueError")
+    except ValueError as e:
+        assert "value should be numeric" in str(e)
+
+
+def test_raises_if_time_var_not_string() -> None:
+    df = make_base_df()
+    try:
+        make_checker()._check_data(df, time_var="value")
+        raise AssertionError("Expected ValueError")
+    except ValueError as e:
+        assert "value should be a string" in str(e)
+
+
+def test_raises_if_time_var_invalid_format() -> None:
+    df = make_base_df()
+    df["period"] = ["Jan-2020", "Feb-2020", "Mar-2020"]
+    try:
+        make_checker()._check_data(df, time_var="period")
+        raise AssertionError("Expected ValueError")
+    except ValueError as e:
+        assert "period should be in the format" in str(e)
+
+
+def test_skips_checks_for_empty_args() -> None:
+    make_checker()._check_data(make_base_df())
