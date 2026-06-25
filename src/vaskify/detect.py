@@ -350,6 +350,11 @@ class Detect:
                     | (log10_diff[col] < lower_bound)  ##
                 ) & ~mask_na
 
+                # Add log variable
+                log_col_name = f"{col}_difflog10"
+                data[log_col_name] = log10_diff[col]
+
+                # Add flag
                 data[period_flag] = 0
                 data.loc[mask_na, period_flag] = np.nan
                 data.loc[mask_outlier, period_flag] = 1
@@ -386,6 +391,7 @@ class Detect:
             log10_diff = data.groupby(self.id_nr)[v].transform(
                 lambda x: np.log10(x / x.shift(1)),  # ratio first, then log
             )
+            data["diff_log10"] = log10_diff
 
             mask_na = log10_diff.isna()
             mask_outlier = (
