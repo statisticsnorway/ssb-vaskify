@@ -26,7 +26,7 @@ def test_thousand_error_outliers(detector_long: Detect) -> None:
         output_format="long",
         output_scope="outliers",
     )
-    expected_shape = (0, 6)
+    expected_shape = (0, 7)
     assert (
         outliers.shape == expected_shape
     ), "output_format 'outlier' returns only outliers"
@@ -37,7 +37,7 @@ def test_thousand_error_wide(detector_wide: Detect) -> None:
         y_var=["turnover_2020", "turnover_2021"],
     )
 
-    expected_shape = (5, 7)
+    expected_shape = (5, 8)
     assert dt_controlled.shape == expected_shape, "Wide format correct dimensions"
 
 
